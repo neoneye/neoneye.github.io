@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Loda Lab</title>
+  <script>
+    var executeProgramCallback = (programId) => {
+      console.log("executeProgramCallback is not installed");
+    }
+    function submitForm(event){
+      event.preventDefault();
+      var el = document.getElementById("sequenceid");
+      const programId = parseInt(el.value);
+      executeProgramCallback(programId);
+    }
+  </script>
+  <script type="module" src="index.js"></script>
+</head>
+<body>
+  <form onsubmit="submitForm(event)">
+    <input 
+      id="sequenceid"
+      type="number" 
+      min="1" 
+      max="999999" 
+      placeholder="OEIS sequence id"
+      value="45">
+  </form>
+  <div id="output">Initializing</div>
+</body>
+</html>
