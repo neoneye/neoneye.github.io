@@ -62,14 +62,18 @@ class PageController {
   constructor(dict) {
 
     // Install `runSourceCode` callback
-    this.runSourceCode = dict['runSourceCode'] || function(sourceCode) {
+    this.runSourceCode = dict['runSourceCode'] || function(sourceCode, termCount, runId) {
       console.error("PageController.runSourceCode() callback not installed");
     };
 
+    this.mTick = 0;
+    this.mUpdateTick = false;
+    this.mRunId = 0;
     this.mIdenticalToOriginal = true;
     this.mOriginalText = "";
     this.mEditor = this.configureEditor();
     this.configureKeyboardShortcuts();
+    this.configureOutputCount();
     this.loadProgram();
   }
   
@@ -92,6 +96,27 @@ class PageController {
 
   showOverlay() {
     document.getElementById("overlay").style.display = "block";
+  }
+
+  getNumberOfTerms() {
+    var radios = document.getElementsByName("outputcountname");
+    const length = radios.length;
+    var value = 10;
+    for (var i = 0; i < length; i++) {
+      if (radios[i].checked) {
+        value = radios[i].value;
+        break;
+      }
+    }
+    return value;
+  }
+
+  configureOutputCount() {
+    const el = document.getElementById('output-count');
+    var self = this;
+    el.addEventListener('change', function(e) {
+      self.runAction();
+    }, false);
   }
 
   loadProgram() {
@@ -136,6 +161,33 @@ class PageController {
     this.runAction();
   }
 
+  outputInnerAppendErrorMessage(message) {
+    var output = document.getElementById("output-inner");
+    var el0 = document.createElement('span');
+    el0.className = "separator";
+    el0.innerText = ",";
+    output.appendChild(el0);
+    var el1 = document.createElement('span');
+    el1.className = "error";
+    el1.innerText = message;
+    output.appendChild(el1);
+  }
+
+  executeTick() {
+    if (!this.mUpdateTick) {
+      return;
+    }
+    // console.log(`tick: ${this.mTick}`);
+    if (this.mTick >= 100) {
+      this.mUpdateTick = false;
+      this.outputInnerAppendErrorMessage("Stopped - exceeded 10 second time limit.");
+      return;
+    }
+    this.mTick += 1;
+    var self = this;
+    setTimeout(function() { self.executeTick(); }, 100);
+  }
+
   configureKeyboardShortcuts() {
     let pageControllerInstance = this;
     let keydownHandler = function(event) {
@@ -152,11 +204,11 @@ class PageController {
         pageControllerInstance.runAction();
         return;
       }
-      // intercept ESCape key, and jump to parent page.
+      // intercept ESCape key, and stop a running program.
       if(isEscapeKeyCode) {
-        console.log("escape: cancel");
+        console.log("escape: stop running");
         event.preventDefault(); // Suppress "double action"
-        pageControllerInstance.cancelAction();
+        pageControllerInstance.stopAction();
         return;
       }
     };
@@ -164,21 +216,51 @@ class PageController {
   }
 
   runAction() {
+    this.mTick = 0;
+    this.mUpdateTick = true;
+    this.mRunId = (this.mRunId + 1) % 256;
+    const runIdClone0 = this.mRunId * 10;
+    const runIdClone1 = runIdClone0 / 10;
+    this.executeTick();
     let sourceCode = this.mEditor.getValue();
-    this.runSourceCode(sourceCode);
+    let termCount = this.getNumberOfTerms();
+    this.runSourceCode(sourceCode, termCount, runIdClone1);
   }
 
-  cancelAction() {
-    console.log("Cancel button");
+  stopAction() {
+    console.log("Stop button");
+    this.mUpdateTick = false;
+  }
+
+  showInfo() {
+    console.log("Show info");
+    document.location = "https://github.com/ckrause/loda";
+  }
+
+  isRunningProgram(runId) {
+    if (!this.mUpdateTick) {
+      return false;
+    }
+    if (this.mRunId != runId) {
+      return false;
+    }
+    return true;
+  }
+
+  finishedComputingTheLastTerm() {
+    console.log("finished computing the last term");
+    this.mUpdateTick = false;
+  }
+
+  exceptionOccurredWhileRunning(message) {
+    this.mUpdateTick = false;
+    this.outputInnerAppendErrorMessage(message);
   }
 }
 
 var gPageController = null;
 
-var callbackExecuteProgramId = (programId) => {
-  console.log("callbackExecuteProgramId is not installed");
-}
-var callbackExecuteSourceCode = (sourceCode) => {
+var callbackExecuteSourceCode = (sourceCode, termCount, runId) => {
   console.log("callbackExecuteSourceCode is not installed");
 }
 var callbackFinishedWasmLoading = () => {
@@ -186,8 +268,8 @@ var callbackFinishedWasmLoading = () => {
 }
 
 function body_onload() {
-  const runSourceCode = function(sourceCode) {
-    callbackExecuteSourceCode(sourceCode);
+  const runSourceCode = function(sourceCode, termCount, runId) {
+    callbackExecuteSourceCode(sourceCode, termCount, runId);
   };
   const dict = {
     'runSourceCode': runSourceCode
@@ -230,12 +312,13 @@ function body_onbeforeunload() {
   
 <header class="titlebar-container">
   <div class="titlebar-item titlebar-item-left">
-    <button class="seconday-button" onclick="gPageController.cancelAction()">Cancel</button>
+    <button class="seconday-button" onclick="gPageController.showInfo()">Info</button>
   </div>
 
   <div class="titlebar-item titlebar-item-center">Edit</div>
 
   <div class="titlebar-item titlebar-item-right">
+    <button class="seconday-button" onclick="gPageController.stopAction()">Stop (Esc)</button>
     <button id="run-button" class="primary-button" onclick="gPageController.runAction()">Run (Ctrl+Enter)</button>
   </div>
 </header>
@@ -248,6 +331,23 @@ function body_onbeforeunload() {
     </div>
 
     <div id="output-outer">
+
+      <div id="output-count">
+        Number of terms:
+        <span class="output-count-radio-item">
+          <input type="radio" id="count10" name="outputcountname" value="10" checked="on">
+          <label for="count10">10</label>
+        </span>
+        <span class="output-count-radio-item">
+          <input type="radio" id="count100" name="outputcountname" value="100">
+          <label for="count100">100</label>
+        </span>
+        <span class="output-count-radio-item">
+          <input type="radio" id="count1000" name="outputcountname" value="1000">
+          <label for="count1000">1000</label>
+        </span>      
+      </div>
+
       <div id="output-inner">
         Output Area
       </div>
@@ -257,7 +357,7 @@ function body_onbeforeunload() {
 </main>
 
 <footer id="page-footer">
-  Version 2021.08.15<br>
+  Version 2021.08.16<br>
   Source code: <a href="https://github.com/neoneye/loda-lab">https://github.com/neoneye/loda-lab</a>
 </footer>
 
