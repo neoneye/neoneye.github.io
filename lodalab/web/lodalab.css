@@ -55,6 +55,7 @@ body {
     right: 0;
     border-left: 1px solid #bdbdbd;
     box-sizing: border-box;
+    overflow-y: scroll;
 }
 #output-inner {
     margin: 10px;
@@ -62,6 +63,16 @@ body {
     background-color: white;
     overflow-wrap: break-word;
     word-wrap: break-word;
+    font-family: monospace;
+}
+#output-inner .error {
+    color: red;
+}
+#output-inner .term {
+    color: black;
+}
+#output-inner .separator {
+    color: #bbb;
 }
 #page-footer {
     border-top: 1px solid #bdbdbd;
@@ -171,4 +182,11 @@ body {
     background-color: #eaeaea;
     border: 1px solid rgb(34, 34, 34);
 }
-  
+#output-count {
+    margin: 10px;
+    padding: 5px;
+    background-color: white;
+}  
+.output-count-radio-item {
+    margin-right: 10px;
+}
