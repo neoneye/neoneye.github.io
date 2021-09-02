@@ -330,11 +330,11 @@ async function load(module, imports) {
 
 async function init(input) {
     if (typeof input === 'undefined') {
-        input = new URL('lodalab_web_bg.wasm', import.meta.url);
+        input = new URL('loda_rust_web_bg.wasm', import.meta.url);
     }
     const imports = {};
     imports.wbg = {};
-    imports.wbg.__wbg_log_a06f29dbeab101c5 = function(arg0, arg1) {
+    imports.wbg.__wbg_log_10f6544928a71368 = function(arg0, arg1) {
         console.log(getStringFromWasm0(arg0, arg1));
     };
     imports.wbg.__wbindgen_object_drop_ref = function(arg0) {
