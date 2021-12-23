@@ -1,0 +1,109 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>Edit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="format-detection" content="telephone=no">
+<link rel="stylesheet" href="web/codemirror/lib/codemirror.css">
+<link rel="stylesheet" href="web/codemirror/theme/idea.css">
+<script src="web/codemirror/lib/codemirror.js"></script>
+<script src="web/codemirror/addon/mode/simple.js"></script>
+<script src="web/codemirror/addon/selection/active-line.js"></script>
+<script src="web/codemirror/addon/edit/trailingspace.js"></script>
+<script src="web/codemirror/addon/display/placeholder.js"></script>
+<script src="web/codemirror_mode_loda.js"></script>
+<link media="all" rel="stylesheet" type="text/css" href="web/loda_rust_web.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+<script src="https://unpkg.com/promise-worker/dist/promise-worker.js"></script>
+<script src="index.js"></script>
+
+</head>
+
+<body onload="body_onload()" onbeforeunload="return body_onbeforeunload()">
+
+<div id="overlay">
+  <div id="overlay-message">Initializing&hellip;</div>
+</div>
+
+<header class="top-banner-container-outer" id="top-banner">
+  <div class="top-banner-container-inner">
+    <div class="top-banner-item top-banner-item-left">
+      &#9888;
+    </div>
+    <div class="top-banner-item top-banner-item-center">
+      There was a problem sending the data. Please try again.<br>
+      <span id="top-banner-item-center-content">No details available.</span>
+    </div>
+    <div class="top-banner-item top-banner-item-right">
+      &#9888;
+    </div>
+  </div>
+</header>
+  
+<header class="titlebar-container">
+  <div class="titlebar-item titlebar-item-left">
+    <button class="seconday-button" onclick="gPageController.showInfo()">LODA Language</button>
+  </div>
+
+  <div class="titlebar-item titlebar-item-center">Edit</div>
+
+  <div class="titlebar-item titlebar-item-right">
+    <button class="seconday-button" onclick="gPageController.stopAction()">Stop (Esc)</button>
+    <button id="run-button" class="primary-button" onclick="gPageController.runAction()">Run (Ctrl+Enter)</button>
+  </div>
+</header>
+
+<main id="splitview-outer">
+  <div id="splitview-inner">
+
+    <div id="editor-outer">
+      <textarea id="editor-inner" placeholder="Content goes here&hellip;"> </textarea>
+    </div>
+
+    <div id="output-outer">
+
+      <div id="output-count">
+        Number of terms:
+        <span class="output-count-radio-item">
+          <input type="radio" id="count10" name="outputcountname" value="10" checked="on">
+          <label for="count10">10</label>
+        </span>
+        <span class="output-count-radio-item">
+          <input type="radio" id="count100" name="outputcountname" value="100">
+          <label for="count100">100</label>
+        </span>
+        <span class="output-count-radio-item">
+          <input type="radio" id="count1000" name="outputcountname" value="1000">
+          <label for="count1000">1000</label>
+        </span>      
+      </div>
+
+      <div class="chart-container" style="position: relative;height:40vh">
+        <canvas id="output-chart"></canvas>
+      </div>
+
+      <div id="output-inner">
+        Output Area
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer id="page-footer">
+  <div id="page-footer-item0" class="page-footer-item">
+    Link to this program
+    <div class="copy-program-link-to-clipboard-tooltip-area">
+      <button onclick="gPageController.copyProgramURLToClipboard()" onmouseout="gPageController.hideCopyToClipboardTooltip()">
+        <span class="tooltiptext" id="copy-program-link-to-clipboard-tooltip-text">Copy to clipboard</span>
+        Copy
+      </button>
+    </div>
+  </div>
+  <div id="page-footer-item1" class="page-footer-item">
+    Updated: 2021 Dec 23<br>
+    Source code: <a target="_blank" href="https://github.com/loda-lang/loda-rust">https://github.com/loda-lang/loda-rust</a>
+  </div>
+</footer>
+
+</body>
+</html>
