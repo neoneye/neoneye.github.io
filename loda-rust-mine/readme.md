@@ -79,3 +79,7 @@ Over time the state alternates between `Mine` and `Postmine`.
   </tr>
 </table>
 
+## Initialization
+
+<img src="initial_state.jpg" alt="initial state" style="width:400px;"/>
+
