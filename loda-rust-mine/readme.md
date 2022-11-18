@@ -15,7 +15,7 @@ Over time the state alternates between `Mine` and `Postmine`.
     <td>1</td>
     <td>Postmine</td>
     <td><img src="postmine_upload0.jpg" alt="postmine, didn't discover anything" style="width:200px;"/></td>
-    <td>Checking the candidate programs.<br>Only 1 worker.<br><br><b>Didn't discover any programs.</b></td>
+    <td>Checking the candidate programs.<br><br>Bottleneck: Only 1 worker. Ideally this should run parallel.<br><br><b>Didn't discover any programs.</b></td>
   </tr>
   <tr>
     <td>2</td>
