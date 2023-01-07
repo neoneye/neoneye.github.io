@@ -5,7 +5,7 @@ Prime numbers makes up a grid for `n` around `1.000.000`.
 
 ## Plot
 
-For `n < 400` it's a curvy pattern.
+The initial 400 points shows a curvy pattern.
 <img src="1 - 400 - plot.jpg">
 
 With `n = 180.000` and 4000 points. This looks like a grid.
@@ -34,7 +34,7 @@ With `n = 1.000.000` and 4000 points. The grid seems to be straight lines. The p
 
 The twin primes doesn't seem to follow a pattern.
 
-With `n = 180.000` and 4000 points.
+The initial 400 points.
 <img src="1 - 400 - no structure with twin and nontwin primes.jpg">
 
 With `n = 180.000` and 4000 points.
