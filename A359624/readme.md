@@ -1,0 +1,37 @@
+# A359624 - draft
+
+Prime numbers makes up a grid for n around 1.000.000.
+
+
+## Plot
+
+For small values, the points are curvy.
+<img src="1 - 400 - plot.jpg">
+
+For values around 180.000 there seems to be a grid.
+<img src="180k - 184k - plot.jpg">
+<img src="300k - 304k - plot.jpg">
+<img src="1000k - 1004k - plot.jpg">
+
+
+## Plots with lines
+
+For small values, the grid is curvy.
+<img src="180k - 184k - plot with manual lines - the points are not following the straigh lines.jpg">
+
+For values around 300.000 the grid is curvy and almost following straight lines.
+<img src="300k - 304k - plot with manual lines - the points are not following the straigh lines.jpg">
+
+For values around 1.000.000 the grid seems to follow straight lines. The points are on the lines.
+<img src="1000k - 1004k - plot with manual lines - the points follows straight lines.jpg">
+
+
+## Plots of twin primes
+
+The twin primes doesn't seem to follow a pattern.
+
+<img src="1 - 400 - no structure with twin and nontwin primes">
+<img src="180k - 184k - no structure with twin and nontwin primes.jpg">
+<img src="300k - 304k - no structure with twin and nontwin primes.jpg">
+<img src="1000k - 1004k - no structure with twin and nontwin primes.jpg">
+
