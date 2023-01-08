@@ -1,4 +1,9 @@
-# A359624 - draft
+# Primes in a grid
+
+```
+Formula
+a(n) = (frac(n / sqrt(2)) - 1/2) * prime(n).
+```
 
 Prime numbers makes up a grid for `n` around `1.000.000`.
 
