@@ -32,6 +32,8 @@ const showCollisions = false;
 var paintColor = 0;
 var isPainting = false;
 
+var showLaserRays = false;
+
 var debugValues = {
   width: 0,
   height: 0,
@@ -78,6 +80,9 @@ window.onload = async function() {
       }
       if (event.code === 'KeyN') {
         paintColor = (paintColor + 9) % 10;
+      }
+      if (event.code === 'KeyL') {
+        showLaserRays = !showLaserRays;
       }
       // console.log(event.code);
     });
@@ -507,23 +512,29 @@ window.onload = async function() {
 
     var whr = webgazer.getVideoPreviewToCameraResolutionRatio();
 
-    if (false) {
-      var line = d3.select('#eyeline1')
-              .attr("x1",data.x)
-              .attr("y1",data.y)
-              .attr("x2",previewWidth - fmPositions[145][0] * whr[0])
-              .attr("y2",fmPositions[145][1] * whr[1]);
+    if (showLaserRays) {
+      d3.select('#eyeline1')
+        .attr("visibility", "visible")
+        .attr("x1",data.x)
+        .attr("y1",data.y)
+        .attr("x2",previewWidth - fmPositions[145][0] * whr[0])
+        .attr("y2",fmPositions[145][1] * whr[1]);
 
-      var line = d3.select("#eyeline2")
-              .attr("x1",data.x)
-              .attr("y1",data.y)
-              .attr("x2",previewWidth - fmPositions[374][0] * whr[0])
-              .attr("y2",fmPositions[374][1] * whr[1]);
+      d3.select("#eyeline2")
+        .attr("visibility", "visible")
+        .attr("x1",data.x)
+        .attr("y1",data.y)
+        .attr("x2",previewWidth - fmPositions[374][0] * whr[0])
+        .attr("y2",fmPositions[374][1] * whr[1]);
 
-      var dot = d3.select("#predictionSquare")
-              .attr("x",data.x)
-              .attr("y",data.y);
-
+      d3.select("#predictionSquare")
+        .attr("visibility", "visible")
+        .attr("x",data.x)
+        .attr("y",data.y);
+    } else {
+      d3.select('#eyeline1').attr("visibility", "hidden");
+      d3.select('#eyeline2').attr("visibility", "hidden");
+      d3.select('#predictionSquare').attr("visibility", "hidden");
     }
 
     if(debugValues.width == 0) {
