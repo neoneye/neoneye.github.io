@@ -324,6 +324,46 @@ window.onload = async function() {
     .attr("font-size", "20px")
     .attr("fill", "black");
 
+    svg.append("text")
+    .attr("x", 10)
+    .attr("y", height - 200)
+    .text("Calibrate by looking at your mouse cursor")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", "20px")
+    .attr("fill", "black");
+
+    svg.append("text")
+    .attr("x", 10)
+    .attr("y", height - 170)
+    .text("while pressing mouse button.")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", "20px")
+    .attr("fill", "black");
+
+    svg.append("text")
+    .attr("x", 10)
+    .attr("y", height - 120)
+    .text("Spacebar = paint.")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", "20px")
+    .attr("fill", "black");
+
+    svg.append("text")
+    .attr("x", 10)
+    .attr("y", height - 80)
+    .text("M N = color.")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", "20px")
+    .attr("fill", "black");
+
+    svg.append("text")
+    .attr("x", 10)
+    .attr("y", height - 40)
+    .text("L = laser.")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", "20px")
+    .attr("fill", "black");
+
     if(showCollisions) {
         svg.on("mousemove", function() {
         var p1 = d3.mouse(this);
