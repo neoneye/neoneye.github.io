@@ -51,6 +51,12 @@ window.onload = async function() {
     if(true) {
       webgazer.params.camConstraints.video.width.ideal = 1920;
       webgazer.params.camConstraints.video.height.ideal = 1080;
+      // webgazer.params.camConstraints.video.height.ideal = 1440;
+      // webgazer.params.camConstraints.video.width.max = 4096;
+      // webgazer.params.camConstraints.video.height.max = 4096;
+      // webgazer.params.camConstraints.video.width.ideal = 2160;
+      // webgazer.params.camConstraints.video.height.ideal = 3840;
+      // webgazer.params.camConstraints.video.frameRate = { ideal: 60, max: 130 };
     }
 
     const webgazerInstance = await webgazer.setRegression('ridge') /* currently must set regression and tracker */
