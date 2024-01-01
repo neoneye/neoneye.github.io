@@ -360,7 +360,7 @@ window.onload = async function() {
     var alignedx = Math.floor(data.x/gridSize + 0.5);
     var alignedy = Math.floor(data.y/gridSize + 0.5);
 
-    if(isPainting) {
+    if(isPainting && cellx >= 0 && cellx < 30 && celly >= 0 && celly < 30) {
       var id = `#cell${cellx}_${celly}`;
       var area = d3.select(id);
       if(area) {
