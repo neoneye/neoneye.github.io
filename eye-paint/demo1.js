@@ -1,5 +1,5 @@
 // Set to true if you want to save the data even if you reload the page.
-window.saveDataAcrossSessions = false;
+window.saveDataAcrossSessions = true;
 
 
 // 54d82841.json
@@ -32,6 +32,11 @@ const showCollisions = false;
 var paintColor = 0;
 var isPainting = false;
 
+var debugValues = {
+  width: 0,
+  height: 0,
+};
+
 window.onload = async function() {
 
     if (!window.saveDataAcrossSessions) {
@@ -40,6 +45,12 @@ window.onload = async function() {
         var localstorageSettingsLabel = 'webgazerGlobalSettings';
         localforage.setItem(localstorageSettingsLabel, null);
     }
+
+    if(true) {
+      webgazer.params.camConstraints.video.width.ideal = 1920;
+      webgazer.params.camConstraints.video.height.ideal = 1080;
+    }
+
     const webgazerInstance = await webgazer.setRegression('ridge') /* currently must set regression and tracker */
       .setTracker('TFFacemesh')
       .begin();
@@ -299,6 +310,14 @@ window.onload = async function() {
     .attr("height",size1)
     .attr("fill","gray");
 
+    svg.append("text")
+    .attr("id", "debugCameraSize")
+    .attr("x", 10)
+    .attr("y", 20)
+    .text("Camera: width x height")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", "20px")
+    .attr("fill", "black");
 
     if(showCollisions) {
         svg.on("mousemove", function() {
@@ -488,7 +507,7 @@ window.onload = async function() {
 
     var whr = webgazer.getVideoPreviewToCameraResolutionRatio();
 
-    if (true) {
+    if (false) {
       var line = d3.select('#eyeline1')
               .attr("x1",data.x)
               .attr("y1",data.y)
@@ -506,4 +525,20 @@ window.onload = async function() {
               .attr("y",data.y);
 
     }
+
+    if(debugValues.width == 0) {
+      // Obtain the size of the camera video feed
+      // <canvas id="webgazerVideoCanvas" style="display: none;" width="1920" height="1080"></canvas>
+      let el = document.getElementById("webgazerVideoCanvas");
+      if(el) {
+        debugValues.width = el.width;
+        debugValues.height = el.height;
+        updateDebugText(debugValues);
+      }
+    }
+}
+
+function updateDebugText(debugValues) {
+  d3.select("#debugCameraSize")
+    .text(`Camera: ${debugValues.width} x ${debugValues.height}`);
 }
