@@ -398,14 +398,33 @@ window.onload = async function() {
     }
   }
 
-  var webgazerCanvas = null;
+var webgazerCanvas = null;
 
-  var previewWidth = webgazer.params.videoViewerWidth;
+var previewWidth = webgazer.params.videoViewerWidth;
 
-  var previous_x = 0;
-  var previous_y = 0;
+var previous_x = 0;
+var previous_y = 0;
 
-  var collisionEyeListener = async function(data, clock) {
+var average = { x1: [], y1: [] };
+
+function getAverage(x, y, iterations) {
+    if (average.x1.length == iterations) {
+      average.x1.shift();
+      average.y1.shift();
+    }
+
+    average.x1.push(x);
+    average.y1.push(y);
+
+    let x1 = average.x1.reduce((acc, val) => acc + val, 0);
+    let y1 = average.y1.reduce((acc, val) => acc + val, 0);
+
+    x1 = x1 / average.x1.length;
+    y1 = y1 / average.y1.length;
+    return [x1, y1];
+}
+
+var collisionEyeListener = async function(data, clock) {
     if(!data)
       return;
 
@@ -419,10 +438,12 @@ window.onload = async function() {
       webgazerCanvas = webgazer.getVideoElementCanvas();
     }
 
-    var cellx = Math.floor((data.x-offsetx)/gridSize + 0.5);
-    var celly = Math.floor((data.y-offsety)/gridSize + 0.5);
-    var alignedx = Math.floor(data.x/gridSize + 0.5);
-    var alignedy = Math.floor(data.y/gridSize + 0.5);
+    let [dx, dy] = getAverage(data.x, data.y, 6);
+
+    var cellx = Math.floor((dx-offsetx)/gridSize + 0.5);
+    var celly = Math.floor((dy-offsety)/gridSize + 0.5);
+    var alignedx = Math.floor(dx/gridSize + 0.5);
+    var alignedy = Math.floor(dy/gridSize + 0.5);
 
     if(isPainting && cellx >= 0 && cellx < 30 && celly >= 0 && celly < 30) {
       var id = `#cell${cellx}_${celly}`;
