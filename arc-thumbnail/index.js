@@ -168,10 +168,11 @@ class ARCPair {
 }
 
 class ARCTask {
-    constructor(jsonData) {
+    constructor(jsonData, openUrl) {
         this.jsonData = jsonData;
         this.train = jsonData.train.map(pair => new ARCPair(pair.input, pair.output));
         this.test = jsonData.test.map(pair => new ARCPair(pair.input, pair.output));
+        this.openUrl = openUrl;
     }
 
     toCanvas(extraWide) {
@@ -181,7 +182,7 @@ class ARCTask {
             width *= 2;
         }
         let height = 150 * scale;
-        let inset = 8 * scale;
+        let inset = 5 * scale;
 
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
@@ -205,15 +206,34 @@ class ARCTask {
 
         // ctx.fillStyle = 'white';
         // ctx.fillRect(0, 0, width, height);
-        ctx.fillStyle = '#282828';
+        // ctx.fillStyle = '#282828';
         // ctx.fillStyle = 'black';
-        ctx.fillRect(inset, inset, width - inset * 2, height - inset * 2);
+        // ctx.fillRect(inset, inset, width - inset * 2, height - inset * 2);
+
+        let trainTestGap = scale;
+
+        ctx.fillStyle = '#333';
+        let inset1 = 0;
+        let trainWidth = (n_train * cellWidthTotalAvailable) / count - trainTestGap;
+        ctx.fillRect(inset, inset1, trainWidth, height - inset1 * 2);
 
         // ctx.fillStyle = 'black';
         // ctx.fillRect(inset, height / 2 - 1, width - inset * 2, 2);
     
         // ctx.fillStyle = '#ffffff';
         // ctx.fillRect((n_train * width) / count, 0, width - (n_train * width) / count, height);
+
+        // ctx.fillStyle = 'rgb(70, 60, 40)';
+        ctx.fillStyle = 'rgb(60, 50, 60)';
+        let maskWidth = (n_test * cellWidthTotalAvailable) / count + inset - trainTestGap;
+        let maskX = width - maskWidth - inset1;
+        ctx.fillRect(
+            maskX, 
+            inset1,
+            maskWidth, 
+            height - inset1 * 2
+        );
+
 
         var cellSize = 1000000;
         for (let i = 0; i < this.train.length; i++) {
@@ -239,7 +259,7 @@ class ARCTask {
             let y0 = inset;
             let y1 = height / 2;
             this.test[i].input.draw(ctx, x, y0, cellWidthWithoutGap, cellHeight, cellSize, {alignBottom: true});
-            this.test[i].output.draw(ctx, x, y1, cellWidthWithoutGap, cellHeight, cellSize, {alignTop: true});
+            // this.test[i].output.draw(ctx, x, y1, cellWidthWithoutGap, cellHeight, cellSize, {alignTop: true});
         }
 
         // for (let i = 1; i < count; i++) {
@@ -247,18 +267,23 @@ class ARCTask {
         //     ctx.fillRect((i * cellWidthTotalAvailable) / count + inset, inset, 1, height - inset * 2);
         // }
     
-        ctx.fillStyle = '#d0a070';
-        let maskWidth = (n_test * cellWidthTotalAvailable) / count;
-        let maskX = width - maskWidth - inset;
-        ctx.fillRect(
-            maskX, 
-            height / 2,
-            maskWidth, 
-            cellHeight + inputOutputGapSize / 2
-        );
+        // ctx.fillStyle = 'rgb(78, 76, 58)';
+        // ctx.fillStyle = 'rgb(78, 60, 40)';
+        // ctx.fillStyle = 'rgb(70, 60, 40)';
+        // let maskWidth = (n_test * cellWidthTotalAvailable) / count;
+        // let maskX = width - maskWidth - inset;
+        // ctx.fillRect(
+        //     maskX, 
+        //     height / 2,
+        //     maskWidth, 
+        //     cellHeight + inputOutputGapSize / 2
+        // );
 
-        ctx.fillStyle = 'black';
-        ctx.fillRect((n_train * cellWidthTotalAvailable) / count + inset - Math.floor(trainTestGapSize / 2), inset, trainTestGapSize, height - inset * 2);
+        // ctx.fillStyle = 'black';
+        // ctx.fillRect((n_train * cellWidthTotalAvailable) / count + inset - Math.floor(trainTestGapSize / 2), inset, trainTestGapSize, height - inset * 2);
+        // ctx.fillRect((n_train * cellWidthTotalAvailable) / count + inset - Math.floor(trainTestGapSize / 2), inset, 1, height - inset * 2);
+        // ctx.fillRect((n_train * cellWidthTotalAvailable) / count + inset - Math.floor(trainTestGapSize / 2), inset, 2, height - inset * 2);
+        // ctx.fillRect((n_train * cellWidthTotalAvailable) / count + inset - Math.floor(trainTestGapSize / 2), 0, 2, height);
 
         return canvas;
     }    
@@ -278,12 +303,6 @@ class PageController {
 
         // Optionally, call this function to retrieve and display the image
         // retrieveImageFromIndexedDB();
-    }
-
-    async loadTaskData(url) {
-        let response = await fetch(url);
-        let jsonData = await response.json();
-        return new ARCTask(jsonData);
     }
 
     async load() {
@@ -324,7 +343,7 @@ class PageController {
         ];
 
         let new_names = [];
-        for (let i = 0; i < 10; i += 1) {
+        for (let i = 0; i < 1; i += 1) {
             new_names = new_names.concat(names);
         }
         names = new_names;
@@ -332,12 +351,13 @@ class PageController {
         let tasks = [];
         for (let name of names) {
             try {
+                let openUrl = `http://127.0.0.1:8090/task/${name}`
                 let response = await fetch(`dataset/${name}.json`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 let jsonData = await response.json();
-                let task = new ARCTask(jsonData);
+                let task = new ARCTask(jsonData, openUrl);
                 tasks.push(task);
             } catch (error) {
                 console.error("Error loading task:", name, error);
@@ -361,16 +381,17 @@ class PageController {
             const el_img = document.createElement('img');
             el_img.className = 'gallery__img';
     
-            const el_figure = document.createElement('figure');
+            const el_a = document.createElement('a');
             if (extraWide) {
-                el_figure.className = `gallery__item gallery__item__wide`;
+                el_a.className = `gallery__item gallery__item__wide`;
             } else {
-                el_figure.className = 'gallery__item gallery__item__normal';
+                el_a.className = 'gallery__item gallery__item__normal';
             }
-            el_figure.appendChild(el_img);
+            el_a.href = task.openUrl;
+            el_a.appendChild(el_img);
     
             const el_gallery = document.getElementById('gallery');
-            el_gallery.appendChild(el_figure);
+            el_gallery.appendChild(el_a);
     
             el_img.src = canvas.toDataURL();
         }
