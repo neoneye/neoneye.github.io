@@ -11,92 +11,98 @@ const color_palette = [
     "#870c25", // 9 = brown
     "#282828", // 10 = dark gray
     "#ffffff", // 11 = white
-  ];
-  
-  function drawCheckerboard() {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const width = 320; 
-    const height = 200; 
-    const cellSize = 20; // Size of each checkerboard cell
-    canvas.width = width;
-    canvas.height = height;
+];
 
-    for (let y = 0; y < height; y += cellSize) {
-        for (let x = 0; x < width; x += cellSize) {
-            ctx.fillStyle = (x + y) % (cellSize * 2) === 0 ? 'black' : 'white';
-            ctx.fillRect(x, y, cellSize, cellSize);
-        }
-    }
+const indexdb_database_name = 'ARCDatabase';
+const indexdb_store_name_image = 'image';
+const indexdb_store_name_other = 'other';
+    
 
-    return canvas;
-}
+function initializeDatabase() {
+    return new Promise((resolve, reject) => {
+        const openRequest = indexedDB.open(indexdb_database_name, 1);
 
-// 2. Convert the canvas to a Blob and save it to IndexedDB
-function saveCanvasToIndexedDB(canvas) {
-    canvas.toBlob(blob => {
-        const openRequest = indexedDB.open('checkerboardDB', 1);
+        openRequest.onupgradeneeded = function(event) {
+            const db = event.target.result;
 
-        openRequest.onupgradeneeded = function() {
-            let db = openRequest.result;
-            if (!db.objectStoreNames.contains('images')) {
-                db.createObjectStore('images', { keyPath: 'id' });
+            // Create object store if it doesn't exist
+            if (!db.objectStoreNames.contains(indexdb_store_name_image)) {
+                db.createObjectStore(indexdb_store_name_image, { keyPath: 'id' });
+            }
+
+            // Create object store if it doesn't exist
+            if (!db.objectStoreNames.contains(indexdb_store_name_other)) {
+                db.createObjectStore(indexdb_store_name_other, { keyPath: 'id' });
             }
         };
 
         openRequest.onerror = function() {
-            console.error("Error", openRequest.error);
+            console.error("Error opening database:", openRequest.error);
+            reject(openRequest.error);
         };
 
         openRequest.onsuccess = function() {
-            let db = openRequest.result;
-            let transaction = db.transaction('images', 'readwrite');
-            let images = transaction.objectStore('images');
-            let request = images.put({ id: 'checkerboard', image: blob });
-
-            request.onsuccess = function() {
-                console.log("Checkerboard saved to DB");
-            };
-
-            request.onerror = function() {
-                console.log("Error", request.error);
-            };
+            resolve(openRequest.result);
         };
     });
 }
 
-// 3. Retrieve the Blob from IndexedDB and display it
-function retrieveImageFromIndexedDB() {
-    const openRequest = indexedDB.open('checkerboardDB', 1);
+async function storeData(db, id, data) {
+    let storeName = indexdb_store_name_other;
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(storeName, "readwrite");
+        const store = transaction.objectStore(storeName);
+        store.put({ id: id, data: data });
 
-    openRequest.onsuccess = function() {
-        let db = openRequest.result;
-        let transaction = db.transaction('images', 'readonly');
-        let images = transaction.objectStore('images');
-        let request = images.get('checkerboard');
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = event => reject("IndexedDB write error: " + event.target.errorCode);
+    });
+}
+
+async function fetchData(db, id) {
+    let storeName = indexdb_store_name_other;
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(storeName, "readonly");
+        const store = transaction.objectStore(storeName);
+        const request = store.get(id);
+
+        request.onsuccess = () => resolve(request.result ? request.result.data : null);
+        request.onerror = event => reject("IndexedDB read error: " + event.target.errorCode);
+    });
+}
+
+async function saveCanvasToIndexedDB(db, canvas, id) {
+    // Convert canvas to blob
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve));
+
+    // Perform the transaction
+    return new Promise((resolve, reject) => {
+        let transaction = db.transaction(indexdb_store_name_image, 'readwrite');
+        let images = transaction.objectStore(indexdb_store_name_image);
+        let request = images.put({ id: id, image: blob });
 
         request.onsuccess = function() {
-            if (request.result) {
-                const imgURL = URL.createObjectURL(request.result.image);
-                // const img = document.createElement('img');
-                // img.src = imgURL;
-                // document.body.appendChild(img);
-
-                const imgElement = document.getElementById('showimage');
-                if (imgElement) {
-                    imgElement.src = imgURL;
-                } else {
-                    console.log('No image element found with id "showimage"');
-                }
-            } else {
-                console.log("No image found in DB");
-            }
+            console.log("Image saved to DB");
+            resolve(request.result);
         };
 
         request.onerror = function() {
             console.log("Error", request.error);
+            reject(request.error);
         };
-    };
+    });
+}
+
+
+async function retrieveImageFromIndexedDB(db, id) {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(indexdb_store_name_image, "readonly");
+        const store = transaction.objectStore(indexdb_store_name_image);
+        const request = store.get(id);
+
+        request.onsuccess = () => resolve(request.result ? request.result.image : null);
+        request.onerror = event => reject("IndexedDB read error: " + event.target.errorCode);
+    });
 }
 
 class ARCImage {
@@ -173,6 +179,23 @@ class ARCTask {
         this.train = jsonData.train.map(pair => new ARCPair(pair.input, pair.output));
         this.test = jsonData.test.map(pair => new ARCPair(pair.input, pair.output));
         this.openUrl = openUrl;
+    }
+
+    toThumbnailCanvas(extraWide, scale) {
+        var width = 320 * scale;
+        if (extraWide) {
+            width *= 2;
+        }
+        let height = 150 * scale;
+
+        const thumbnailCanvas = document.createElement('canvas');
+        const thumbnailCtx = thumbnailCanvas.getContext('2d');
+        thumbnailCanvas.width = width;
+        thumbnailCanvas.height = height;
+
+        let canvas = this.toCanvas(extraWide);
+        thumbnailCtx.drawImage(canvas, 0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
+        return thumbnailCanvas;
     }
 
     toCanvas(extraWide) {
@@ -292,21 +315,18 @@ class ARCTask {
 
 class PageController {
     constructor() {
-        // this.start();
-        this.load();
+        this.db = null;
     }
 
-    start() {
-        const canvas = drawCheckerboard();
-        document.body.appendChild(canvas);
-        saveCanvasToIndexedDB(canvas);
-
-        // Optionally, call this function to retrieve and display the image
-        // retrieveImageFromIndexedDB();
+    async onload() {
+        this.db = await initializeDatabase();
+        console.log('PageController.onload()', this.db);
+        await this.loadBundle();
+        // await this.loadNames();
     }
 
-    async load() {
-        console.log('PageController.load()');
+    async loadNames() {
+        console.log('PageController.loadNames()');
         let names = [
             '0a2355a6',
             '0b17323b',
@@ -365,10 +385,91 @@ class PageController {
         }
 
         console.log('Loaded tasks:', tasks.length);
+        await this.renderTasks(tasks);
+        await this.showTasks(tasks);
+    }
 
+    async loadBundle() {
+        console.log('PageController.loadBundle()');
+
+        let storedUTCTimestamp = localStorage.getItem('lastFetchedUTCTimestamp');
+        console.log("JSON was fetched at UTC timestamp:", storedUTCTimestamp);
+
+        try {
+            let cachedData = await fetchData(this.db, 'bundle2');
+            if (!cachedData) {
+                console.log('No cached data. Fetching');
+
+                // Fetch and decompress data if not in cache
+                const response = await fetch('dataset/bundle2.json.gz');
+                const arrayBuffer = await response.arrayBuffer();
+                const decompressed = pako.inflate(new Uint8Array(arrayBuffer), { to: 'string' });
+                const jsonData = JSON.parse(decompressed);
+    
+                // Store in IndexedDB
+                await storeData(this.db, 'bundle2', jsonData);
+                
+                // Update timestamp
+                let utcTimestamp = Date.now();
+                localStorage.setItem('lastFetchedUTCTimestamp', utcTimestamp.toString());
+    
+                let tasks = PageController.processData(jsonData);
+
+                // Render thumbnails
+                await this.renderTasks(tasks);
+
+                await this.showTasks(tasks);
+            } else {
+                console.log('Using cached data');
+                let tasks = PageController.processData(cachedData);
+                await this.showTasks(tasks);
+            }
+        } catch (error) {
+            console.error('Error loading bundle', error);
+        }
+    }
+
+    static processData(jsonData) {
+        console.log('processData called');
+
+        let tasks = [];
+        for (let key of Object.keys(jsonData)) {
+            let dict = jsonData[key];
+            let id = dict.id;
+            let openUrl = `http://127.0.0.1:8090/task/${id}`
+            let task = new ARCTask(dict, openUrl);
+            tasks.push(task);
+        }
+        console.log('Loaded tasks:', tasks.length);
+
+        return tasks;
+    }
+
+    async renderTasks(tasks) {
+        console.log('Render tasks:', tasks.length);
+
+        for (let i = 0; i < tasks.length; i++) {
+            let task = tasks[i];
+            let count = task.train.length + task.test.length;
+            let extraWide = (count > 6);
+            let canvas = task.toThumbnailCanvas(extraWide, 1);
+
+            let id = `task_${i}`;
+            // This does background stuff, it's not async await
+            // The code immediately after this gets executed before this the thumbnails have been stored to the database.
+            await saveCanvasToIndexedDB(this.db, canvas, id);
+        }
+    }
+
+    hideDemo() {
         document.getElementById('demo1').hidden = true;
         document.getElementById('demo2').hidden = true;
         document.getElementById('demo3').hidden = true;
+    }
+
+    async showTasks(tasks) {
+        console.log('Show tasks:', tasks.length);
+        this.hideDemo();
 
         for (let i = 0; i < tasks.length; i++) {
             let task = tasks[i];
@@ -376,7 +477,20 @@ class PageController {
             let count = task.train.length + task.test.length;
             let extraWide = (count > 6);
 
-            let canvas = task.toCanvas(extraWide);
+            var dataURL = null;
+            try {
+                let id = `task_${i}`;
+                let image = await retrieveImageFromIndexedDB(this.db, id);
+                // console.log('image', image);
+                dataURL = URL.createObjectURL(image);
+            } catch (error) {
+                console.error(`Error loading image ${id}`, error);
+                continue;
+            }
+                    
+            // let canvas = task.toThumbnailCanvas(extraWide, 1);
+            // let canvas = task.toCanvas(extraWide);
+            // dataURL = canvas.toDataURL();
     
             const el_img = document.createElement('img');
             el_img.className = 'gallery__img';
@@ -393,8 +507,29 @@ class PageController {
             const el_gallery = document.getElementById('gallery');
             el_gallery.appendChild(el_a);
     
-            el_img.src = canvas.toDataURL();
+            el_img.src = dataURL;
         }
+    }
+
+    flushIndexedDB() {
+        localStorage.removeItem('lastFetchedUTCTimestamp');
+
+        const openRequest = indexedDB.open(indexdb_database_name, 1);
+
+        openRequest.onsuccess = function() {
+            let db = openRequest.result;
+            let transaction = db.transaction('images', 'readwrite');
+            let images = transaction.objectStore('images');
+            let request = images.clear();
+
+            request.onsuccess = function() {
+                console.log("IndexedDB flushed");
+            };
+
+            request.onerror = function() {
+                console.log("Error", request.error);
+            };
+        };
     }
 }
 
@@ -402,4 +537,7 @@ var gPageController = null;
   
 function body_onload() {
     gPageController = new PageController();
+    (async () => {
+        gPageController.onload();
+    })();
 }

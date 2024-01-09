@@ -122,9 +122,26 @@ body {
   }
 }
 
-@media only screen and (min-width: 768px) {
-  .container {
-    width: 80%;
-    margin: 2rem auto; 
+@media only screen and (min-width: 900px) {
+  .gallery {
+    grid-template-columns: repeat(8, 1fr);
+  }
+}
+
+@media only screen and (min-width: 1000px) {
+  .gallery {
+    grid-template-columns: repeat(9, 1fr);
+  }
+}
+
+@media only screen and (min-width: 1100px) {
+  .gallery {
+    grid-template-columns: repeat(10, 1fr);
+  }
+}
+
+@media only screen and (min-width: 1200px) {
+  .gallery {
+    grid-template-columns: repeat(11, 1fr);
   }
 }
