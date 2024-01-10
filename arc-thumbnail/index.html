@@ -4,26 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="index.css">
     <link rel="shortcut icon" type="image/png" href="img/favicon.png">
     <script src="pako_inflate.min.js"></script>
+    <script src="common.js"></script>
     <script src="index.js"></script>
     <title>ARC thumbnail</title>
 </head>
 <body onload="body_onload()">
-    <!-- <button onclick="gPageController.flushIndexedDB()">Flush</button> -->
-    <div class="container">
-        <div class="gallery" id="gallery">
-            <a id="demo1" class="gallery__item gallery__item__normal" href="http://127.0.0.1:8090/task/8d510a79">
-                <img src="image/1.jpg" alt="Gallery image 1" class="gallery__img">
-            </a>
-            <a id="demo2" class="gallery__item gallery__item__wide" href="http://127.0.0.1:8090/task/6ecd11f4">
-                <img src="image/4.jpg" alt="Gallery image 4" class="gallery__img">
-            </a>
-            <a id="demo3" class="gallery__item gallery__item__normal" href="http://127.0.0.1:8090/task/06df4c85">
-                <img id="showimage" src="image/3.jpg" alt="Gallery image 5" class="gallery__img">
-            </a>
-        </div>
+    <div id="overlay">
+        <div id="overlay-message">Initializing&hellip;</div>
     </div>
+
+    <header class="titlebar-container">
+        <div class="titlebar-item titlebar-item-left">
+            <!-- <a class="seconday-button" href="index.html">Back</a> -->
+        </div>
+        
+        <div class="titlebar-item titlebar-item-center">Tasks</div>
+        
+        <div class="titlebar-item titlebar-item-right">
+            <!-- <a class="seconday-button" href="">Do nothing</a> -->
+            <!-- <button onclick="gPageController.flushIndexedDB()">Flush</button> -->
+        </div>
+    </header>
+
+    <main id="main-outer">
+        <div id="main-inner">
+            <div class="container">
+                <div class="gallery" id="gallery">
+                    <a id="demo1" class="gallery__item gallery__item__normal" href="http://127.0.0.1:8090/task/8d510a79">
+                        <img src="image/1.jpg" alt="Gallery image 1" class="gallery__img">
+                    </a>
+                    <a id="demo2" class="gallery__item gallery__item__wide" href="http://127.0.0.1:8090/task/6ecd11f4">
+                        <img src="image/4.jpg" alt="Gallery image 4" class="gallery__img">
+                    </a>
+                    <a id="demo3" class="gallery__item gallery__item__normal" href="http://127.0.0.1:8090/task/06df4c85">
+                        <img id="showimage" src="image/3.jpg" alt="Gallery image 5" class="gallery__img">
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
 </body>
 </html>
