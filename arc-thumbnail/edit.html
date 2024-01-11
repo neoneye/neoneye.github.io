@@ -22,6 +22,10 @@
         
         <div class="titlebar-item titlebar-item-right">
             <!-- <a class="seconday-button" href="">Do nothing</a> -->
+            <!-- <span>Test: 1 of 2</span>
+            <button>Next</button> -->
+            <button class="seconday-button" onclick="gPageController.toggleOverlay()">O=Overlay</button>
+            <button class="seconday-button" onclick="gPageController.toggleFullscreen()">F=Fullscreen</button>
         </div>
     </header>
 
@@ -30,8 +34,33 @@
 
             <img id="task-image"></img>
 
+            <div id="draw-area-outer">
+                <canvas id="draw-area-canvas"></canvas>
+            </div>
+
         </div>
     </main>
 
+    <footer id="page-footer">
+        <div id="page-footer-item2" class="page-footer-item">
+            <div style="float:right" >
+                <button onclick="gPageController.submitDrawing()">Submit!</button>
+                <div id="submit-status-correct">&#128156; Correct</div>
+                <div id="submit-status-incorrect">&#128128; Incorrect</div>
+            </div>
+            <div id="palette">
+                <div id="palette-item0" class="arc_color_0 palette_item_selected" onclick="gPageController.pickColor(0)"></div>
+                <div id="palette-item1" class="arc_color_1" onclick="gPageController.pickColor(1)"></div>
+                <div id="palette-item2" class="arc_color_2" onclick="gPageController.pickColor(2)"></div>
+                <div id="palette-item3" class="arc_color_3" onclick="gPageController.pickColor(3)"></div>
+                <div id="palette-item4" class="arc_color_4" onclick="gPageController.pickColor(4)"></div>
+                <div id="palette-item5" class="arc_color_5" onclick="gPageController.pickColor(5)"></div>
+                <div id="palette-item6" class="arc_color_6" onclick="gPageController.pickColor(6)"></div>
+                <div id="palette-item7" class="arc_color_7" onclick="gPageController.pickColor(7)"></div>
+                <div id="palette-item8" class="arc_color_8" onclick="gPageController.pickColor(8)"></div>
+                <div id="palette-item9" class="arc_color_9" onclick="gPageController.pickColor(9)"></div>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>

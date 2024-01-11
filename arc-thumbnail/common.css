@@ -105,8 +105,8 @@ body {
 }
 .seconday-button {
     border: none;
-    color: rgb(77, 73, 73);
-    border: 1px solid rgb(54, 54, 54);
+    color: var(--ui-text-color);
+    border: 1px solid var(--ui-text-color);
     padding: 10px 18px;
     text-align: center;
     text-decoration: none;
@@ -114,8 +114,8 @@ body {
     border-radius: 5px;
 }
 .seconday-button:hover {
-    background-color: #fffef5;
-    border: 1px solid rgb(100, 100, 100);
+    background-color: var(--ui-text-color);
+    color: var(--ui-background);
 }
 .seconday-button:active {
     background-color: #eaeaea;

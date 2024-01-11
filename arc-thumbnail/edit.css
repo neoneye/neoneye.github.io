@@ -2,7 +2,94 @@ body {
     /* background-color: red; */
 }
 
+#main-inner {
+    /* background-color: red; */
+}
+
 #task-image {
     width: 100%;
     background-color: black;
+    /* z-index: 1; */
+    /* display: none; */
+    /* visibility: hidden; */
+}
+
+#draw-area-outer {
+    position: absolute;
+    display: block;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+#palette {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#palette div {
+    aspect-ratio: 1;
+    display: inline-block;
+    cursor: pointer;
+    width: 8vw;
+    max-width: 80px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    /* Desktops with mouse */
+    #palette div:hover {
+        opacity: 0.5;
+    }
+}
+
+.palette_item_selected {
+    border: 2px solid white;
+    border-radius: 5px;
+    transform: scale(1.25);
+    box-shadow: 0 5px 24px 1px rgb(0 0 0/33%);
+}
+
+.arc_color_0 {
+    background-color: #000;
+}
+.arc_color_1 {
+    background-color: #0074D9; /* blue */
+}
+.arc_color_2 {
+    background-color: #FF4136; /* red */
+}
+.arc_color_3 {
+    background-color: #2ECC40; /* green */
+}
+.arc_color_4 {
+    background-color: #FFDC00; /* yellow */
+}
+.arc_color_5 {
+    background-color: #AAAAAA; /* grey */
+}
+.arc_color_6 {
+    background-color: #F012BE; /* fuschia */
+}
+.arc_color_7 {
+    background-color: #FF851B; /* orange */
+}
+.arc_color_8 {
+    background-color: #7FDBFF; /* teal */
+}
+.arc_color_9 {
+    background-color: #870C25; /* brown */
+}
+
+#page-footer {
+    flex-wrap: wrap;
+}
+
+#page-footer-item2 {
+    flex: 0 0 100%; /* flex-grow, flex-shrink, flex-basis */
+    text-align: center;
+}
+
+#submit-status-correct, #submit-status-incorrect {
+    display: none;
 }
