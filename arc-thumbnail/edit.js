@@ -288,7 +288,7 @@ class PageController {
     hideOverlayShowEditor() {
         let el0 = document.getElementById("task-image");
         let el1 = document.getElementById("draw-area-outer");
-        let el2 = document.getElementById("page-footer-item2");
+        let el2 = document.getElementById("page-footer-draw-mode");
         el0.style.visibility = "hidden";
         el1.style.visibility = "visible";
         el2.style.visibility = "visible";
@@ -297,7 +297,7 @@ class PageController {
     hideEditorShowOverlay() {
         let el0 = document.getElementById("task-image");
         let el1 = document.getElementById("draw-area-outer");
-        let el2 = document.getElementById("page-footer-item2");
+        let el2 = document.getElementById("page-footer-draw-mode");
         el0.style.visibility = "visible";
         el1.style.visibility = "hidden";
         el2.style.visibility = "hidden";

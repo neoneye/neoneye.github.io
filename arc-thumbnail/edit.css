@@ -23,14 +23,35 @@ body {
     right: 0;
 }
 
+#page-footer-draw-mode {
+    border-top: 1px solid var(--ui-separator);
+    display: grid;
+    grid-template-columns: 1fr auto 1fr; /* 1fr for the left and right columns, auto for the middle column */
+    justify-content: center; /* Centers the middle column */
+    align-items: center; /* Aligns items vertically in the center, if needed */
+    gap: 10px; /* Optional: Adds space between columns */
+}
+
+.page-footer-left {
+    /* border: 1px dashed red; */
+}
+  
+.page-footer-center {
+    /* border: 1px dashed green; */
+}
+
+.page-footer-right {
+    /* border: 1px dashed blue; */
+    text-align: right;
+    margin-right: 10px;
+}
+
 #palette {
-    margin-left: auto;
-    margin-right: auto;
+    display: flex;
 }
 
 #palette div {
     aspect-ratio: 1;
-    display: inline-block;
     cursor: pointer;
     width: 8vw;
     max-width: 80px;
@@ -79,15 +100,6 @@ body {
 }
 .arc_color_9 {
     background-color: #870C25; /* brown */
-}
-
-#page-footer {
-    flex-wrap: wrap;
-}
-
-#page-footer-item2 {
-    flex: 0 0 100%; /* flex-grow, flex-shrink, flex-basis */
-    text-align: center;
 }
 
 #submit-status-correct, #submit-status-incorrect {
