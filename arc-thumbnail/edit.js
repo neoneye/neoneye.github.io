@@ -3,6 +3,29 @@ function goBack() {
     return false;  // Prevents the default anchor action
 }
 
+// https://stackoverflow.com/questions/9038625/detect-if-device-is-ios
+function iOS() {
+    return [
+      'iPad Simulator',
+      'iPhone Simulator',
+      'iPod Simulator',
+      'iPad',
+      'iPhone',
+      'iPod'
+    ].includes(navigator.platform)
+    // iPad on iOS 13 detection
+    || (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+}
+
+function enableFullscreenMode() {
+    if (iOS()) {
+        // Fullscreen mode behaves weird on iPad. It's better to disable it.
+        // Fullscreen mode is not available on iPhone. It's better to disable it.
+        return false;
+    }
+    return true;
+}
+
 class PageController {
     constructor() {
         this.db = null;
@@ -28,6 +51,11 @@ class PageController {
         } else {
             this.taskId = null;
             console.log("Task parameter not found in URL");
+        }
+
+        if (enableFullscreenMode()) {
+            let el = document.getElementById('fullscreen-button');
+            el.style.display = 'inline-block';
         }
 
         this.canvas = document.getElementById('draw-area-canvas');
@@ -75,7 +103,9 @@ class PageController {
         // Listen for the keyup event
         window.addEventListener('keyup', (event) => {
             if (event.code === 'KeyF') {
-                this.toggleFullscreen();
+                if (enableFullscreenMode()) {
+                    this.toggleFullscreen();
+                }
             }
             if (event.code === 'KeyO') {
                 this.toggleOverlay();
