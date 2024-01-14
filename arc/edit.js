@@ -261,7 +261,7 @@ class PageController {
         }
         console.log('Using cached data');
 
-        let task = await PageController.findTask(cachedData, this.taskId);
+        let task = await this.findTask(cachedData, this.taskId);
         if(!task) {
             console.error('Error there is no task.');
             return;
@@ -276,15 +276,15 @@ class PageController {
         this.showCanvas();
     }
 
-    static findTask(jsonData, taskId) {
+    findTask(jsonData, taskId) {
         console.log('processData called');
 
         for (let key of Object.keys(jsonData)) {
             let dict = jsonData[key];
             let id = dict.id;
             if (taskId == id) {
-                let openUrl = `http://127.0.0.1:8090/task/${id}`
-                let thumbnailCacheId = `task_thumbnail_${id}`
+                let openUrl = `http://127.0.0.1:8090/task/${taskId}`;
+                let thumbnailCacheId = `task_thumbnail_${this.datasetId}_${taskId}`;
                 let task = new ARCTask(dict, openUrl, thumbnailCacheId);
                 return task;
             }

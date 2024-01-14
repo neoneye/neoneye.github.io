@@ -154,10 +154,10 @@ class PageController {
         let tasks = [];
         for (let key of Object.keys(jsonData)) {
             let dict = jsonData[key];
-            let id = dict.id;
-            let encodedId = encodeURIComponent(id);
+            let taskId = dict.id;
+            let encodedId = encodeURIComponent(taskId);
             let openUrl = `edit.html?dataset=${this.datasetId}&task=${encodedId}`;
-            let thumbnailCacheId = `task_thumbnail_${id}`;
+            let thumbnailCacheId = `task_thumbnail_${this.datasetId}_${taskId}`;
             let task = new ARCTask(dict, openUrl, thumbnailCacheId);
             tasks.push(task);
         }
