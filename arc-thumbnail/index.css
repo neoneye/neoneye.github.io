@@ -92,6 +92,10 @@
   grid-row: auto / span 1;
 }
 
+#dataset-label {
+  display: none;
+}
+
 @media only screen and (min-width: 400px) {
   .gallery {
     grid-template-columns: repeat(3, 1fr);
@@ -119,6 +123,10 @@
 @media only screen and (min-width: 800px) {
   .gallery {
     grid-template-columns: repeat(7, 1fr);
+  }
+
+  #dataset-label {
+    display: inline-block;
   }
 }
 

@@ -37,20 +37,33 @@ class PageController {
         const urlParams = new URLSearchParams(window.location.search);
 
         // Get the 'task' parameter
-        const task = urlParams.get('task');
+        const urlParamTask = urlParams.get('task');
 
         // If 'task' parameter exists, decode it
-        if (task) {
-            const decodedTask = decodeURIComponent(task);
+        if (urlParamTask) {
+            const decodedTask = decodeURIComponent(urlParamTask);
             console.log("Task:", decodedTask);
             this.taskId = decodedTask;
 
-            document.title = `Edit ${decodedTask}`;
+            document.title = decodedTask;
 
             document.getElementById('title_task').innerText = decodedTask;
         } else {
             this.taskId = null;
-            console.log("Task parameter not found in URL");
+            console.error("URLSearchParams does not contain 'task' parameter.");
+        }
+
+        // Get the 'dataset' parameter
+        const urlParamDataset = urlParams.get('dataset');
+
+        // If 'dataset' parameter exists, decode it
+        if (urlParamDataset) {
+            const decodedDataset = decodeURIComponent(urlParamDataset);
+            console.log("Dataset:", decodedDataset);
+            this.datasetId = decodedDataset;
+        } else {
+            this.datasetId = 'ARC';
+            console.error("URLSearchParams does not contain 'dataset' parameter.");
         }
 
         if (enableFullscreenMode()) {
@@ -237,7 +250,7 @@ class PageController {
 
         var cachedData = null;
         try {
-            cachedData = await fetchData(this.db, 'bundle2');
+            cachedData = await fetchData(this.db, this.datasetId);
         } catch (error) {
             console.error('Error loading bundle', error);
             return;

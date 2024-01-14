@@ -1,13 +1,44 @@
 class PageController {
     constructor() {
         this.db = null;
+
+        // Create URLSearchParams object
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Get the 'dataset' parameter
+        const urlParamDataset = urlParams.get('dataset');
+
+        // If 'dataset' parameter exists, decode it
+        if (urlParamDataset) {
+            const decodedDataset = decodeURIComponent(urlParamDataset);
+            console.log("Dataset:", decodedDataset);
+            this.datasetId = decodedDataset;
+        } else {
+            this.datasetId = 'ARC';
+            // console.log("URLSearchParams does not contain 'dataset' parameter. Using 'ARC' dataset.");
+        }
+
+        document.title = this.datasetId;
     }
 
     async onload() {
         this.db = await initializeDatabase();
         console.log('PageController.onload()', this.db);
-        await this.loadBundle();
+        await this.loadTasks();
         // await this.loadNames();
+        this.setupDatasetPicker();
+    }
+
+    setupDatasetPicker() {
+        var select = document.getElementById('select-dataset');
+
+        // Set the selected option in the dropdown
+        select.value = this.datasetId;
+
+        // Listen for changes to the selected option
+        select.addEventListener('change', () => {
+            window.location.href = `index.html?dataset=${encodeURIComponent(select.value)}`;
+        });
     }
 
     async loadNames() {
@@ -75,32 +106,33 @@ class PageController {
         await this.showTasks(tasks);
     }
 
-    async loadBundle() {
-        console.log('PageController.loadBundle()');
+    async loadTasks() {
+        console.log('PageController.loadTasks()');
 
         let storedUTCTimestamp = localStorage.getItem('lastFetchedUTCTimestamp');
         console.log("JSON was fetched at UTC timestamp:", storedUTCTimestamp);
 
+        let datasetId = this.datasetId;
         try {
-            let cachedData = await fetchData(this.db, 'bundle2');
+            let cachedData = await fetchData(this.db, datasetId);
             if (!cachedData) {
                 console.log('No cached data. Fetching');
 
                 // Fetch and decompress data if not in cache
-                const response = await fetch('dataset/bundle2.json.gz');
+                const response = await fetch(`dataset/${datasetId}.json.gz`);
                 const arrayBuffer = await response.arrayBuffer();
                 const decompressed = pako.inflate(new Uint8Array(arrayBuffer), { to: 'string' });
                 console.log('decompressed.length', decompressed.length);
                 const jsonData = JSON.parse(decompressed);
     
                 // Store in IndexedDB
-                await storeData(this.db, 'bundle2', jsonData);
+                await storeData(this.db, datasetId, jsonData);
                 
                 // Update timestamp
                 let utcTimestamp = Date.now();
                 localStorage.setItem('lastFetchedUTCTimestamp', utcTimestamp.toString());
     
-                let tasks = PageController.processData(jsonData);
+                let tasks = this.processData(jsonData);
 
                 // Render thumbnails
                 await this.renderTasks(tasks);
@@ -108,7 +140,7 @@ class PageController {
                 await this.showTasks(tasks);
             } else {
                 console.log('Using cached data');
-                let tasks = PageController.processData(cachedData);
+                let tasks = this.processData(cachedData);
                 await this.showTasks(tasks);
             }
         } catch (error) {
@@ -116,7 +148,7 @@ class PageController {
         }
     }
 
-    static processData(jsonData) {
+    processData(jsonData) {
         console.log('processData called');
 
         let tasks = [];
@@ -124,7 +156,7 @@ class PageController {
             let dict = jsonData[key];
             let id = dict.id;
             let encodedId = encodeURIComponent(id);
-            let openUrl = `edit.html?task=${encodedId}`;
+            let openUrl = `edit.html?dataset=${this.datasetId}&task=${encodedId}`;
             let thumbnailCacheId = `task_thumbnail_${id}`;
             let task = new ARCTask(dict, openUrl, thumbnailCacheId);
             tasks.push(task);
