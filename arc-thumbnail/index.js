@@ -57,12 +57,13 @@ class PageController {
         for (let name of names) {
             try {
                 let openUrl = `http://127.0.0.1:8090/task/${name}`
+                let thumbnailCacheId = `task_thumbnail_${name}`
                 let response = await fetch(`dataset/${name}.json`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 let jsonData = await response.json();
-                let task = new ARCTask(jsonData, openUrl);
+                let task = new ARCTask(jsonData, openUrl, thumbnailCacheId);
                 tasks.push(task);
             } catch (error) {
                 console.error("Error loading task:", name, error);
@@ -89,6 +90,7 @@ class PageController {
                 const response = await fetch('dataset/bundle2.json.gz');
                 const arrayBuffer = await response.arrayBuffer();
                 const decompressed = pako.inflate(new Uint8Array(arrayBuffer), { to: 'string' });
+                console.log('decompressed.length', decompressed.length);
                 const jsonData = JSON.parse(decompressed);
     
                 // Store in IndexedDB
@@ -122,8 +124,9 @@ class PageController {
             let dict = jsonData[key];
             let id = dict.id;
             let encodedId = encodeURIComponent(id);
-            let openUrl = `edit.html?task=${encodedId}`
-            let task = new ARCTask(dict, openUrl);
+            let openUrl = `edit.html?task=${encodedId}`;
+            let thumbnailCacheId = `task_thumbnail_${id}`;
+            let task = new ARCTask(dict, openUrl, thumbnailCacheId);
             tasks.push(task);
         }
         console.log('Loaded tasks:', tasks.length);
@@ -134,15 +137,22 @@ class PageController {
     async renderTasks(tasks) {
         console.log('Render tasks:', tasks.length);
 
+        var count_hit = 0;
+        var count_miss = 0;
         for (let i = 0; i < tasks.length; i++) {
             let task = tasks[i];
-            let count = task.train.length + task.test.length;
-            let extraWide = (count > 6);
-            let canvas = task.toThumbnailCanvas(extraWide, 1);
 
-            let id = `task_${i}`;
-            await storeCanvas(this.db, canvas, id);
+            let dataURL = await this.dataURLForTaskThumbnailIfCached(task);
+            if (dataURL != null) {
+                // console.log('Rendering task - already cached', task.id);
+                count_hit += 1;
+                continue;
+            }
+            // console.log('Rendering task', task.id);
+            await this.renderTaskThumbnailToCache(task);
+            count_miss += 1;
         }
+        console.log(`Render tasks. Hit: ${count_hit}. Miss: ${count_miss}`);
     }
 
     hideDemo() {
@@ -155,6 +165,53 @@ class PageController {
         document.getElementById("overlay").style.display = "none";
     }
 
+    async renderTaskThumbnailToCache(task) {
+        if (!(task instanceof ARCTask)) {
+            throw new Error(`task is not an instance of ARCTask. task: ${task}`);
+        }
+        let count = task.train.length + task.test.length;
+        let extraWide = (count > 6);
+        let canvas = task.toThumbnailCanvas(extraWide, 1);
+
+        await storeCanvas(this.db, canvas, task.thumbnailCacheId);
+    }
+
+    async dataURLForTaskThumbnailIfCached(task) {
+        if (!(task instanceof ARCTask)) {
+            throw new Error(`task is not an instance of ARCTask. task: ${task}`);
+        }
+        let thumbnailCacheId = task.thumbnailCacheId;
+        var image = null;
+        try {
+            // console.log('Loading image', thumbnailCacheId);
+            image = await fetchImage(this.db, thumbnailCacheId);
+        } catch (error) {
+            console.error(`Error loading image ${thumbnailCacheId}`, error);
+            return null;
+        }
+        if (image == null) {
+            // console.log(`The image is not present in the cache. ${thumbnailCacheId}`);
+            return null;
+        }
+
+        // console.log('image', image);
+        let dataURL = URL.createObjectURL(image);
+        return dataURL;
+    }
+
+    async dataURLForTaskThumbnail(task) {
+        if (!(task instanceof ARCTask)) {
+            throw new Error(`task is not an instance of ARCTask. task: ${task}`);
+        }
+        let dataURL = await this.dataURLForTaskThumbnailIfCached(task);
+        if (dataURL != null) {
+            return dataURL;
+        }
+        await this.renderTaskThumbnailToCache(task);
+        dataURL = await this.dataURLForTaskThumbnailIfCached(task);
+        return dataURL;
+    }
+
     async showTasks(tasks) {
         console.log('Show tasks:', tasks.length);
         this.hideDemo();
@@ -165,14 +222,9 @@ class PageController {
             let count = task.train.length + task.test.length;
             let extraWide = (count > 6);
 
-            var dataURL = null;
-            try {
-                let id = `task_${i}`;
-                let image = await fetchImage(this.db, id);
-                // console.log('image', image);
-                dataURL = URL.createObjectURL(image);
-            } catch (error) {
-                console.error(`Error loading image ${id}`, error);
+            let dataURL = await this.dataURLForTaskThumbnail(task);
+            if (!dataURL) {
+                console.error(`The dataURL is null. Error loading image ${task.thumbnailCacheId}`);
                 continue;
             }
                     

@@ -20,7 +20,7 @@ const indexdb_store_name_other = 'other';
 
 function initializeDatabase() {
     return new Promise((resolve, reject) => {
-        const openRequest = indexedDB.open(indexdb_database_name, 4);
+        const openRequest = indexedDB.open(indexdb_database_name, 5);
 
         openRequest.onupgradeneeded = function(event) {
             const db = event.target.result;
@@ -174,11 +174,12 @@ class ARCPair {
 }
 
 class ARCTask {
-    constructor(jsonData, openUrl) {
+    constructor(jsonData, openUrl, thumbnailCacheId) {
         this.jsonData = jsonData;
         this.train = jsonData.train.map(pair => new ARCPair(pair.input, pair.output));
         this.test = jsonData.test.map(pair => new ARCPair(pair.input, pair.output));
         this.openUrl = openUrl;
+        this.thumbnailCacheId = thumbnailCacheId;
     }
 
     toThumbnailCanvas(extraWide, scale) {

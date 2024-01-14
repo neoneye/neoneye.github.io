@@ -271,7 +271,8 @@ class PageController {
             let id = dict.id;
             if (taskId == id) {
                 let openUrl = `http://127.0.0.1:8090/task/${id}`
-                let task = new ARCTask(dict, openUrl);
+                let thumbnailCacheId = `task_thumbnail_${id}`
+                let task = new ARCTask(dict, openUrl, thumbnailCacheId);
                 return task;
             }
         }
