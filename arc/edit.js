@@ -160,16 +160,26 @@ class PageController {
             radio.addEventListener('change', () => {
                 // This function is called whenever a radio button is selected
                 if(radio.checked) {
-                    console.log('Selected Tool:', radio.value);
-
-                    let el = document.getElementById('tool-button');
-                    el.innerText = `Tool: ${radio.value}`;
-                    this.currentTool = radio.value;
-                    this.showCanvas(true);
-                    this.hideToolPanel();
+                    this.didPickTool(radio.value);
                 }
             });
         });
+    }
+
+    didPickTool(toolId) {
+        console.log('Selected Tool:', toolId);
+        let el = document.getElementById('tool-button');
+        el.innerText = `Tool: ${toolId}`;
+        this.currentTool = toolId;
+        this.showCanvas(true);
+        this.hideToolPanel();
+
+        let el1 = document.getElementById('crop-to-selected-rectangle-button');
+        if (this.isCurrentToolSelect()) {
+            el1.classList.remove('hidden');
+        } else {
+            el1.classList.add('hidden');
+        }
     }
 
     getPosition(event) {
@@ -308,10 +318,7 @@ class PageController {
 
         let fillSelectedRectangle = this.currentTool == 'select';
         if (fillSelectedRectangle) {
-            let minX = Math.min(this.selectRectangle.x0, this.selectRectangle.x1);
-            let maxX = Math.max(this.selectRectangle.x0, this.selectRectangle.x1);
-            let minY = Math.min(this.selectRectangle.y0, this.selectRectangle.y1);
-            let maxY = Math.max(this.selectRectangle.y0, this.selectRectangle.y1);
+            let { minX, maxX, minY, maxY } = this.getSelectedRectangleCoordinates();
             if (minX > maxX || minY > maxY) {
                 return;
             }
@@ -412,8 +419,12 @@ class PageController {
         el_img.src = dataURL;
     }
 
+    isCurrentToolSelect() {
+        return this.currentTool == 'select';
+    }
+
     showCanvas(clear) {
-        let isSelectTool = this.currentTool == 'select';
+        let isSelectTool = this.isCurrentToolSelect();
 
         const ctx = this.canvas.getContext('2d');
 
@@ -450,10 +461,7 @@ class PageController {
 
         // Draw the dashed select rectangle
         if (isSelectTool) {
-            let minX = Math.min(this.selectRectangle.x0, this.selectRectangle.x1);
-            let maxX = Math.max(this.selectRectangle.x0, this.selectRectangle.x1);
-            let minY = Math.min(this.selectRectangle.y0, this.selectRectangle.y1);
-            let maxY = Math.max(this.selectRectangle.y0, this.selectRectangle.y1);
+            let { minX, maxX, minY, maxY } = this.getSelectedRectangleCoordinates();
             // console.log('minX', minX, 'maxX', maxX, 'minY', minY, 'maxY', maxY);
 
             let x = image.calcX0(0, width, cellSize) + minX * cellSize + inset;
@@ -681,6 +689,45 @@ class PageController {
         this.floodFill(x+1, y, sourceColor, targetColor);
         this.floodFill(x, y-1, sourceColor, targetColor);
         this.floodFill(x, y+1, sourceColor, targetColor);
+    }
+
+    getSelectedRectangleCoordinates() {
+        let minX = Math.min(this.selectRectangle.x0, this.selectRectangle.x1);
+        let maxX = Math.max(this.selectRectangle.x0, this.selectRectangle.x1);
+        let minY = Math.min(this.selectRectangle.y0, this.selectRectangle.y1);
+        let maxY = Math.max(this.selectRectangle.y0, this.selectRectangle.y1);
+        return { minX, maxX, minY, maxY };
+    }
+
+    cropWithSelectedRectangle() {
+        if (!this.isCurrentToolSelect()) {
+            console.log('Crop is only available in select mode.');
+            return;
+        }
+
+        let { minX, maxX, minY, maxY } = this.getSelectedRectangleCoordinates();
+        // console.log('minX', minX, 'maxX', maxX, 'minY', minY, 'maxY', maxY);
+        if (minX > maxX || minY > maxY) {
+            return;
+        }
+        if (minX < 0 || maxX >= this.image.width) {
+            return;
+        }
+        if (minY < 0 || maxY >= this.image.height) {
+            return;
+        }
+        let pixels = [];
+        for (var y = minY; y <= maxY; y++) {
+            var row = [];
+            for (var x = minX; x <= maxX; x++) {
+                row.push(this.image.pixels[y][x]);
+            }
+            pixels.push(row);
+        }
+        this.image = new ARCImage(pixels);
+        this.assignSelectRectangleFromCurrentImage();
+        this.showCanvas(true);
+        this.hideToolPanel();
     }
 
     showToolPanel() {
