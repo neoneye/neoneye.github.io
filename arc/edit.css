@@ -6,6 +6,10 @@ body {
     /* background-color: red; */
 }
 
+.hidden {
+    display: none;
+}
+
 #title_task {
     width: 50px;
     white-space: nowrap;
@@ -30,6 +34,44 @@ body {
     right: 0;
 }
 
+#tool-panel {
+    position: absolute;
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    background-color: rgba(128, 128, 128, 0.7);
+}
+
+#tool-panel.hidden {
+    display: none !important;
+}
+
+#tool-panel-inner {
+    width: 50vw;
+    height: 50vh;
+    display: block;
+    background-color: grey;
+    opacity: 1;
+    box-shadow: 0 5px 24px 1px rgb(0 0 0/33%);
+    position: relative;
+    padding: 0.5em;
+}
+
+#tool-radio-buttons {
+    position: absolute;
+    bottom: 5px;
+}
+
+#canvas-size-input {
+    font-size: 20px;
+    width: 8ch;
+}
+
 #page-footer-draw-mode {
     border-top: 1px solid var(--ui-separator);
     display: grid;
@@ -41,6 +83,7 @@ body {
 
 .page-footer-left {
     /* border: 1px dashed red; */
+    margin-left: 10px;
 }
   
 .page-footer-center {
@@ -59,7 +102,6 @@ body {
 
 #palette div {
     aspect-ratio: 1;
-    cursor: pointer;
     width: 8vw;
     max-width: 80px;
 }
@@ -67,11 +109,18 @@ body {
 @media (hover: hover) and (pointer: fine) {
     /* Desktops with mouse */
     #palette div:hover {
-        opacity: 0.5;
+        opacity: 0.8;
+        border: 1px solid white;
+    }
+
+    #palette div.palette_item_selected:hover {
+        opacity: 1;
+        border: 2px solid white;
     }
 }
 
 .palette_item_selected {
+    z-index: 2;
     border: 2px solid white;
     border-radius: 5px;
     transform: scale(1.25);

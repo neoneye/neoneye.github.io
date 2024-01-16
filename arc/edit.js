@@ -74,6 +74,9 @@ class PageController {
         this.canvas = document.getElementById('draw-area-canvas');
         this.isDrawing = false;
         this.currentColor = 0;
+        this.currentTest = 0;
+        this.currentTool = 'paint';
+        this.numberOfTests = 1;
 
         var pixels = [];
         let maxPixelSize = 100;
@@ -102,7 +105,7 @@ class PageController {
         // Add an event listener to resize the canvas whenever the window is resized
         window.addEventListener('resize', () => {
             resizeCanvas();
-            this.showCanvas();
+            this.showCanvas(true);
         });
 
         this.canvas.addEventListener('touchstart', (event) => { this.startDrawing(event); }, false);
@@ -134,7 +137,22 @@ class PageController {
                 console.log('Leaving full-screen mode.');
                 this.isFullscreen = false;
             }
-        });        
+        });
+
+        // Get all radio buttons with the name 'tool_switching'
+        var radios = document.querySelectorAll('input[name="tool_switching"]');
+        radios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                // This function is called whenever a radio button is selected
+                if(radio.checked) {
+                    console.log('Selected Tool:', radio.value);
+
+                    let el = document.getElementById('tool-button');
+                    el.innerText = `Tool: ${radio.value}`;
+                    this.currentTool = radio.value;
+                }
+            });
+        });
     }
 
     getPosition(event) {
@@ -171,8 +189,6 @@ class PageController {
         let x0 = Math.floor(drawX + (width - innerWidth) / 2);
         var y0 = Math.floor(drawY + (height - innerHeight) / 2);
 
-        // let cellx = Math.floor((position.x-x0)/cellSize + 0.5);
-        // let celly = Math.floor((position.y-y0)/cellSize + 0.5);
         let cellx = Math.floor((position.x-x0)/cellSize);
         let celly = Math.floor((position.y-y0)/cellSize);
         // console.log('cellx', cellx, 'celly', celly);
@@ -182,8 +198,13 @@ class PageController {
         if (celly < 0 || celly >= this.image.height) {
             return;
         }
-        this.image.pixels[celly][cellx] = this.currentColor;
-        this.showCanvas();
+        if(this.currentTool == 'paint') {
+            this.image.pixels[celly][cellx] = this.currentColor;
+        }
+        if(this.currentTool == 'fill') {
+            this.floodFillAt(cellx, celly);
+        }
+        this.showCanvas(false);
     }
 
     draw(event) {
@@ -208,8 +229,6 @@ class PageController {
         let x0 = Math.floor(drawX + (width - innerWidth) / 2);
         var y0 = Math.floor(drawY + (height - innerHeight) / 2);
 
-        // let cellx = Math.floor((position.x-x0)/cellSize + 0.5);
-        // let celly = Math.floor((position.y-y0)/cellSize + 0.5);
         let cellx = Math.floor((position.x-x0)/cellSize);
         let celly = Math.floor((position.y-y0)/cellSize);
         // console.log('cellx', cellx, 'celly', celly);
@@ -219,8 +238,10 @@ class PageController {
         if (celly < 0 || celly >= this.image.height) {
             return;
         }
-        this.image.pixels[celly][cellx] = this.currentColor;
-        this.showCanvas();
+        if(this.currentTool == 'paint') {
+            this.image.pixels[celly][cellx] = this.currentColor;
+        }
+        this.showCanvas(false);
     }
 
     stopDrawing(event) {
@@ -267,13 +288,18 @@ class PageController {
             return;
         }
         this.task = task;
+        this.numberOfTests = task.test.length;
         await this.showTask(task);
 
-        let image = this.task.test[0].input;
+        this.assignImageFromCurrentTest();
+        this.showCanvas(true);
+    }
+
+    assignImageFromCurrentTest() {
+        let testIndex = this.currentTest % this.numberOfTests;
+        let image = this.task.test[testIndex].input;
         let pixels = JSON.parse(JSON.stringify(image.pixels));
         this.image = new ARCImage(pixels)
-
-        this.showCanvas();
     }
 
     findTask(jsonData, taskId) {
@@ -303,15 +329,25 @@ class PageController {
         let canvas = task.toCanvas(insetValue, extraWide);
         let dataURL = canvas.toDataURL();
 
-        const el_img = document.getElementById('task-image');
+        let el_nextButton = document.getElementById('next-test-button');
+        if (this.numberOfTests >= 2) {
+            el_nextButton.classList.remove('hidden');
+        }
+
+        let el_img = document.getElementById('task-image');
         el_img.src = dataURL;
     }
 
-    showCanvas() {
+    showCanvas(clear) {
         const ctx = this.canvas.getContext('2d');
 
         let width = this.canvas.width;
         let height = this.canvas.height;
+
+        // Clear the canvas to be fully transparent
+        if(clear) {
+            ctx.clearRect(0, 0, width, height);
+        }
 
         let image = this.image;
         let cellSize = image.cellSize(width, height);
@@ -319,10 +355,8 @@ class PageController {
     }
 
     toggleOverlay() {
-        let el0 = document.getElementById("task-image");
-        let el1 = document.getElementById("draw-area-outer");
-        let el2 = document.getElementById("page-footer-item2");
-        if (el0.style.visibility == "hidden") {
+        let el = document.getElementById("task-image");
+        if (el.style.visibility == "hidden") {
             this.hideEditorShowOverlay();
         } else {
             this.hideOverlayShowEditor();
@@ -371,7 +405,8 @@ class PageController {
         let image = this.image;
         let json0 = JSON.stringify(image.pixels);
 
-        let expectedImage = this.task.test[0].output;
+        let testIndex = this.currentTest % this.numberOfTests;
+        let expectedImage = this.task.test[testIndex].output;
         let json1 = JSON.stringify(expectedImage.pixels);
 
         let isCorrect = json0 == json1;
@@ -389,6 +424,164 @@ class PageController {
             el.style.display = 'none';
         }, 3000);
     }
+
+    nextTest() {
+        let value0 = this.currentTest;
+        this.currentTest = (this.currentTest + 1) % this.numberOfTests;
+        let value1 = this.currentTest;
+        console.log(`Next test: ${value0} -> ${value1}`);
+        this.assignImageFromCurrentTest();
+        this.showCanvas(true);
+    }
+
+    getCanvasSize() {
+        let sizeInput = document.getElementById('canvas-size-input').value;
+    
+        // Split the string at 'x'
+        let dimensions = sizeInput.split('x');
+    
+        if (dimensions.length != 2) {
+            console.error('Invalid input format. Correct format: widthxheight');
+            return null;
+        }
+
+        let width = parseInt(dimensions[0]);
+        let height = parseInt(dimensions[1]);
+
+        if (isNaN(width) || isNaN(height)) {
+            console.error('Invalid input: width and height must be numbers.');
+            return null;
+        }
+        if (width < 1 || height < 1) {
+            console.error('Invalid input: width and height must be 1 or greater.');
+            return null;
+        }
+        if (width > this.maxPixelSize || height > this.maxPixelSize) {
+            console.error(`Invalid input: width and height must be less than or equal to ${this.maxPixelSize}.`);
+            return null;
+        }
+        
+        // Return width and height as an object
+        return { width, height };
+    }
+    
+    canvasSizeInputOnKeyDown(event) {
+        // Check if the key pressed is 'Enter'
+        if (event.key === 'Enter' || event.keyCode === 13) {
+            // Call the function you want to execute when Enter is pressed
+            this.resizeCanvas();
+        }
+    }
+
+    resizeCanvas() {
+        let size = this.getCanvasSize();
+        if (!size) {
+            console.error('Unable to determine the size');
+            return;
+        }
+
+        console.log('Width:', size.width, 'Height:', size.height);
+
+        // Resize the image, preserve the content.
+        let outsideColor = this.currentColor;
+        let pixels = this.image.pixels;
+        let newPixels = [];
+        for (var y = 0; y < size.height; y++) {
+            var row = [];
+            for (var x = 0; x < size.width; x++) {
+                var value = outsideColor;
+                if (y < pixels.length && x < pixels[y].length) {
+                    value = pixels[y][x];
+                }
+                row.push(value);
+            }
+            newPixels.push(row);
+        }
+        let newImage = new ARCImage(newPixels);
+        this.image = newImage;
+        this.showCanvas(true);
+
+        this.hideToolPanel();
+    }
+
+    copyInputCanvas() {
+        this.assignImageFromCurrentTest();
+        this.showCanvas(true);
+        this.hideToolPanel();
+    }
+
+    resetWithCurrentColor() {
+        let pixels = [];
+        for (var y = 0; y < this.image.height; y++) {
+            var row = [];
+            for (var x = 0; x < this.image.width; x++) {
+                row.push(this.currentColor);
+            }
+            pixels.push(row);
+        }
+        this.image = new ARCImage(pixels);
+        this.showCanvas(true);
+        this.hideToolPanel();
+    }
+
+    floodFillAt(x, y) {
+        let pixels = this.image.pixels;
+        if (x < 0 || x >= this.image.width) {
+            return;
+        }
+        if (y < 0 || y >= this.image.height) {
+            return;
+        }
+        let value = pixels[y][x];
+        this.floodFill(x, y, value, this.currentColor);
+    }
+
+    floodFill(x, y, sourceColor, targetColor) {
+        let pixels = this.image.pixels;
+        if (x < 0 || x >= this.image.width) {
+            return;
+        }
+        if (y < 0 || y >= this.image.height) {
+            return;
+        }
+        let value = pixels[y][x];
+        if ((value == targetColor) || (value != sourceColor)) {
+            return;
+        }
+        pixels[y][x] = targetColor;
+        this.floodFill(x-1, y, sourceColor, targetColor);
+        this.floodFill(x+1, y, sourceColor, targetColor);
+        this.floodFill(x, y-1, sourceColor, targetColor);
+        this.floodFill(x, y+1, sourceColor, targetColor);
+    }
+
+    showToolPanel() {
+        {
+            var el = document.getElementById('canvas-size-input');
+            el.value = `${this.image.width}x${this.image.height}`;
+        }
+        {
+            var el = document.getElementById('tool-panel');
+            el.classList.remove('hidden');
+        }
+    }
+
+    hideToolPanel() {
+        var el = document.getElementById('tool-panel');
+        el.classList.add('hidden');
+    }
+
+    dismissToolPanel(event) {
+        let innerDiv = document.getElementById('tool-panel-inner');
+    
+        // Check if the click was outside the inner div
+        if (event.target === innerDiv || innerDiv.contains(event.target)) {
+            // Click inside, do nothing
+        } else {
+            // Click outside, dismiss the panel
+            this.hideToolPanel();
+        }
+    }    
 }
 
 var gPageController = null;

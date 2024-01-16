@@ -13,19 +13,41 @@
     <title>ARC edit</title>
 </head>
 <body onload="body_onload()">
+    <div id="tool-panel" class="hidden" onclick="gPageController.dismissToolPanel(event)">
+        <div id="tool-panel-inner">
+            <div>
+                <h4>Canvas size (width x height)</h4>
+                <div>
+                    <input type="text" id="canvas-size-input" maxlength="10" value="3x3" placeholder="widthxheight" onkeydown="gPageController.canvasSizeInputOnKeyDown(event)">
+                    <button onclick="gPageController.resizeCanvas()" id="resize_btn">Resize</button>
+                </div>
+            </div>
+            <hr>
+            <button onclick="gPageController.copyInputCanvas()">Copy from input</button>
+            <hr>
+            <button onclick="gPageController.resetWithCurrentColor()">Reset with current color</button>
+            <hr>
+            <div id="tool-radio-buttons">
+                <h4>Tool</h4>
+                <input type="radio" id="tool_paint" name="tool_switching" value="paint" checked="">
+                <label for="tool_paint">Paint</label>
+                <input type="radio" id="tool_fill" name="tool_switching" value="fill">
+                <label for="tool_fill">Fill</label>
+            </div>
+        </div>
+    </div>
+
     <header class="titlebar-container">
         <div class="titlebar-item titlebar-item-left">
             <a class="seconday-button" href="#" onclick="goBack()">Back</a>
+            <button id="fullscreen-button" class="seconday-button" style="display: none" onclick="gPageController.toggleFullscreen()">F=Fullscreen</button>
         </div>
         
         <div class="titlebar-item titlebar-item-center" id="title_task">Task name</div>
         
         <div class="titlebar-item titlebar-item-right">
-            <!-- <a class="seconday-button" href="">Do nothing</a> -->
-            <!-- <span>Test: 1 of 2</span>
-            <button>Next</button> -->
+            <button id="next-test-button" class="seconday-button hidden" onclick="gPageController.nextTest()">Next</button>
             <button class="seconday-button" onclick="gPageController.toggleOverlay()">O=Overlay</button>
-            <button id="fullscreen-button" class="seconday-button" style="display: none" onclick="gPageController.toggleFullscreen()">F=Fullscreen</button>
         </div>
     </header>
 
@@ -44,6 +66,7 @@
     <footer id="page-footer-draw-mode">
         <div class="page-footer-left">
             <!-- Left -->
+            <button id="tool-button" class="seconday-button" onclick="gPageController.showToolPanel()">Tool: paint</button>
         </div>
         <div id="palette" class="page-footer-center">
             <div id="palette-item0" class="arc_color_0 palette_item_selected" onclick="gPageController.pickColor(0)"></div>
@@ -59,7 +82,7 @@
         </div>
         <div class="page-footer-right">
             <!-- Right -->
-            <button onclick="gPageController.submitDrawing()">Submit!</button>
+            <button class="seconday-button" onclick="gPageController.submitDrawing()">Submit!</button>
             <div id="submit-status-correct">&#128156; Correct</div>
             <div id="submit-status-incorrect">&#128128; Incorrect</div>
         </div>
