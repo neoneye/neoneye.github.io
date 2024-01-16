@@ -145,15 +145,26 @@ class ARCImage {
         return Math.floor(Math.min(cellX, cellY));
     }
 
+    // Left position of the image
+    calcX0(drawX, width, cellSize) {
+        let innerWidth = cellSize * this.width;
+        return Math.floor(drawX + (width - innerWidth) / 2);
+    }
+
+    // Top position of the image
+    calcY0(drawY, height, cellSize) {
+        let innerHeight = cellSize * this.height;
+        return Math.floor(drawY + (height - innerHeight) / 2);
+    }
+
     draw(ctx, drawX, drawY, width, height, cellSize, options) {
-        const innerWidth = cellSize * this.width;
-        const innerHeight = cellSize * this.height;
-        let x0 = Math.floor(drawX + (width - innerWidth) / 2);
-        var y0 = Math.floor(drawY + (height - innerHeight) / 2);
+        let x0 = this.calcX0(drawX, width, cellSize);
+        var y0 = this.calcY0(drawY, height, cellSize);
         if (options.alignTop) {
             y0 = drawY;
         }
         if (options.alignBottom) {
+            let innerHeight = cellSize * this.height;
             y0 = drawY + height - innerHeight;
         }
         for (let y = 0; y < this.height; y += 1) {

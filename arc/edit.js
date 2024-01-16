@@ -77,6 +77,7 @@ class PageController {
         this.currentTest = 0;
         this.currentTool = 'paint';
         this.numberOfTests = 1;
+        this.inset = 2;
 
         var pixels = [];
         let maxPixelSize = 100;
@@ -91,6 +92,20 @@ class PageController {
         this.image = new ARCImage(pixels);
 
         this.isFullscreen = false;
+
+        this.selectRectangle = { 
+            x0: 0, 
+            y0: 0,
+            x1: 0,
+            y1: 0,
+        };
+
+        {
+            // Select the radio button with the id 'tool_paint'
+            // Sometimes the browser remembers the last selected radio button, across sessions.
+            // This code makes sure that the 'tool_paint' radio button is always selected on launch.
+            document.getElementById('tool_paint').checked = true;
+        }
     }
 
     async onload() {
@@ -150,6 +165,8 @@ class PageController {
                     let el = document.getElementById('tool-button');
                     el.innerText = `Tool: ${radio.value}`;
                     this.currentTool = radio.value;
+                    this.showCanvas(true);
+                    this.hideToolPanel();
                 }
             });
         });
@@ -175,15 +192,15 @@ class PageController {
         var ctx = this.canvas.getContext('2d');
         let position = this.getPosition(event);
         let xcellSize = 5;
-        ctx.fillStyle = 'black';
+        ctx.fillStyle = 'white';
         ctx.fillRect(position.x, position.y, xcellSize, xcellSize);
 
-        let width = this.canvas.width;
-        let height = this.canvas.height;
+        let width = this.canvas.width - this.inset * 2;
+        let height = this.canvas.height - this.inset * 2;
         let cellSize = this.image.cellSize(width, height);
 
-        const drawX = 0;
-        const drawY = 0;
+        const drawX = this.inset;
+        const drawY = this.inset;
         const innerWidth = cellSize * this.image.width;
         const innerHeight = cellSize * this.image.height;
         let x0 = Math.floor(drawX + (width - innerWidth) / 2);
@@ -192,6 +209,20 @@ class PageController {
         let cellx = Math.floor((position.x-x0)/cellSize);
         let celly = Math.floor((position.y-y0)/cellSize);
         // console.log('cellx', cellx, 'celly', celly);
+
+        if(this.currentTool == 'select') {
+            let clampedCellX = Math.max(0, Math.min(cellx, this.image.width - 1));
+            let clampedCellY = Math.max(0, Math.min(celly, this.image.height - 1));
+            this.selectRectangle = { 
+                x0: clampedCellX, 
+                y0: clampedCellY,
+                x1: clampedCellX,
+                y1: clampedCellY,
+            };
+            this.showCanvas(true);
+            return;
+        }
+
         if (cellx < 0 || cellx >= this.image.width) {
             return;
         }
@@ -200,11 +231,12 @@ class PageController {
         }
         if(this.currentTool == 'paint') {
             this.image.pixels[celly][cellx] = this.currentColor;
+            this.showCanvas(false);
         }
         if(this.currentTool == 'fill') {
             this.floodFillAt(cellx, celly);
+            this.showCanvas(false);
         }
-        this.showCanvas(false);
     }
 
     draw(event) {
@@ -218,12 +250,12 @@ class PageController {
         ctx.fillStyle = 'grey';
         ctx.fillRect(position.x, position.y, xcellSize, xcellSize);
 
-        let width = this.canvas.width;
-        let height = this.canvas.height;
+        let width = this.canvas.width - this.inset * 2;
+        let height = this.canvas.height - this.inset * 2;
         let cellSize = this.image.cellSize(width, height);
 
-        const drawX = 0;
-        const drawY = 0;
+        const drawX = this.inset;
+        const drawY = this.inset;
         const innerWidth = cellSize * this.image.width;
         const innerHeight = cellSize * this.image.height;
         let x0 = Math.floor(drawX + (width - innerWidth) / 2);
@@ -232,6 +264,15 @@ class PageController {
         let cellx = Math.floor((position.x-x0)/cellSize);
         let celly = Math.floor((position.y-y0)/cellSize);
         // console.log('cellx', cellx, 'celly', celly);
+        if(this.currentTool == 'select') {
+            let clampedCellX = Math.max(0, Math.min(cellx, this.image.width - 1));
+            let clampedCellY = Math.max(0, Math.min(celly, this.image.height - 1));
+            this.selectRectangle.x1 = clampedCellX;
+            this.selectRectangle.y1 = clampedCellY;
+            this.showCanvas(true);
+            return;
+        }
+
         if (cellx < 0 || cellx >= this.image.width) {
             return;
         }
@@ -240,8 +281,8 @@ class PageController {
         }
         if(this.currentTool == 'paint') {
             this.image.pixels[celly][cellx] = this.currentColor;
+            this.showCanvas(false);
         }
-        this.showCanvas(false);
     }
 
     stopDrawing(event) {
@@ -264,6 +305,29 @@ class PageController {
         selectedColor.classList.add('palette_item_selected');
 
         this.currentColor = colorValue;
+
+        let fillSelectedRectangle = this.currentTool == 'select';
+        if (fillSelectedRectangle) {
+            let minX = Math.min(this.selectRectangle.x0, this.selectRectangle.x1);
+            let maxX = Math.max(this.selectRectangle.x0, this.selectRectangle.x1);
+            let minY = Math.min(this.selectRectangle.y0, this.selectRectangle.y1);
+            let maxY = Math.max(this.selectRectangle.y0, this.selectRectangle.y1);
+            if (minX > maxX || minY > maxY) {
+                return;
+            }
+            if (minX < 0 || maxX >= this.image.width) {
+                return;
+            }
+            if (minY < 0 || maxY >= this.image.height) {
+                return;
+            }
+            for (let y = minY; y <= maxY; y++) {
+                for (let x = minX; x <= maxX; x++) {
+                    this.image.pixels[y][x] = this.currentColor;
+                }
+            }
+            this.showCanvas(false);
+        }        
     }
 
     async loadTask() {
@@ -300,6 +364,16 @@ class PageController {
         let image = this.task.test[testIndex].input;
         let pixels = JSON.parse(JSON.stringify(image.pixels));
         this.image = new ARCImage(pixels)
+        this.assignSelectRectangleFromCurrentImage();
+    }
+
+    assignSelectRectangleFromCurrentImage() {
+        this.selectRectangle = {
+            x0: 0,
+            y0: 0,
+            x1: this.image.width - 1,
+            y1: this.image.height - 1,
+        };
     }
 
     findTask(jsonData, taskId) {
@@ -339,19 +413,72 @@ class PageController {
     }
 
     showCanvas(clear) {
+        let isSelectTool = this.currentTool == 'select';
+
         const ctx = this.canvas.getContext('2d');
 
-        let width = this.canvas.width;
-        let height = this.canvas.height;
+        let canvasWidth = this.canvas.width;
+        let canvasHeight = this.canvas.height;
+        let inset = this.inset;
+        let width = canvasWidth - inset * 2;
+        let height = canvasHeight - inset * 2;
 
         // Clear the canvas to be fully transparent
         if(clear) {
-            ctx.clearRect(0, 0, width, height);
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
         }
 
         let image = this.image;
         let cellSize = image.cellSize(width, height);
-        image.draw(ctx, 0, 0, width, height, cellSize, {});
+
+        // Draw an outline around the image
+        {
+            let x = image.calcX0(0, width, cellSize) + inset - 1;
+            let y = image.calcY0(0, height, cellSize) + inset - 1;
+            let w = image.width * cellSize + 2;
+            let h = image.height * cellSize + 2;
+            var color = '#888888';
+            if (isSelectTool) {
+                color = 'black';
+            }
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, w, h);
+        }
+
+        // Draw the image
+        image.draw(ctx, inset, inset, width, height, cellSize, {});
+
+        // Draw the dashed select rectangle
+        if (isSelectTool) {
+            let minX = Math.min(this.selectRectangle.x0, this.selectRectangle.x1);
+            let maxX = Math.max(this.selectRectangle.x0, this.selectRectangle.x1);
+            let minY = Math.min(this.selectRectangle.y0, this.selectRectangle.y1);
+            let maxY = Math.max(this.selectRectangle.y0, this.selectRectangle.y1);
+            // console.log('minX', minX, 'maxX', maxX, 'minY', minY, 'maxY', maxY);
+
+            let x = image.calcX0(0, width, cellSize) + minX * cellSize + inset;
+            let y = image.calcY0(0, height, cellSize) + minY * cellSize + inset;
+            // console.log('x', x, 'y', y);
+    
+            let drawWidth = (maxX - minX + 1) * cellSize;
+            let drawHeight = (maxY - minY + 1) * cellSize;
+
+            // First draw a solid white rectangle
+            ctx.beginPath();
+            ctx.setLineDash([]);
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.rect(x - 1, y - 1, drawWidth, drawHeight);
+            ctx.stroke();
+
+            // Then draw a dashed black rectangle
+            ctx.beginPath();
+            ctx.setLineDash([4, 4]);
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.rect(x - 1, y - 1, drawWidth, drawHeight);
+            ctx.stroke();
+        }
     }
 
     toggleOverlay() {
@@ -499,6 +626,7 @@ class PageController {
         }
         let newImage = new ARCImage(newPixels);
         this.image = newImage;
+        this.assignSelectRectangleFromCurrentImage();
         this.showCanvas(true);
 
         this.hideToolPanel();
