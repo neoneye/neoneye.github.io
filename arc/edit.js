@@ -141,6 +141,18 @@ class PageController {
             if (event.code === 'KeyO') {
                 this.toggleOverlay();
             }
+            if (event.code === 'ArrowUp') {
+                this.moveUp();
+            }
+            if (event.code === 'ArrowDown') {
+                this.moveDown();
+            }
+            if (event.code === 'ArrowLeft') {
+                this.moveLeft();
+            }
+            if (event.code === 'ArrowRight') {
+                this.moveRight();
+            }
             // console.log(event.code);
         });
         
@@ -716,16 +728,156 @@ class PageController {
         if (minY < 0 || maxY >= this.image.height) {
             return;
         }
-        let pixels = [];
-        for (var y = minY; y <= maxY; y++) {
-            var row = [];
-            for (var x = minX; x <= maxX; x++) {
-                row.push(this.image.pixels[y][x]);
-            }
-            pixels.push(row);
-        }
-        this.image = new ARCImage(pixels);
+        this.image = this.image.crop(minX, minY, maxX - minX + 1, maxY - minY + 1);
         this.assignSelectRectangleFromCurrentImage();
+        this.showCanvas(true);
+        this.hideToolPanel();
+    }
+
+    // Get either the selected rectangle or the rectangle for the entire image
+    getToolRectangle() {
+        if (this.isCurrentToolSelect()) {
+            let { minX, maxX, minY, maxY } = this.getSelectedRectangleCoordinates();
+            if (minX > maxX || minY > maxY) {
+                throw new Error(`getToolRectangle. Invalid selected rectangle: min must be smaller than max. minX: ${minX}, maxX: ${maxX}, minY: ${minY}, maxY: ${maxY}`);
+            }
+            if (minX < 0 || maxX >= this.image.width || minY < 0 || maxY >= this.image.height) {
+                throw new Error(`getToolRectangle. The selected rectangle is outside the image boundaries. minX: ${minX}, maxX: ${maxX}, minY: ${minY}, maxY: ${maxY}`);
+            }
+            return { 
+                x: minX, 
+                y: minY,
+                width: maxX - minX + 1, 
+                height: maxY - minY + 1 
+            };
+        } else {
+            return { 
+                x: 0, 
+                y: 0, 
+                width: this.image.width, 
+                height: this.image.height 
+            };
+        }
+    }
+
+    // Reverse the x-axis of the selected rectangle
+    flipX() {
+        let rectangle = this.getToolRectangle();
+        let cropImage = this.image.crop(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+        let flippedImage = cropImage.flipX();
+        this.image = this.image.overlay(flippedImage, rectangle.x, rectangle.y);
+        this.showCanvas(true);
+        this.hideToolPanel();
+    }
+
+    // Reverse the y-axis of the selected rectangle
+    flipY() {
+        let rectangle = this.getToolRectangle();
+        let cropImage = this.image.crop(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+        let flippedImage = cropImage.flipY();
+        this.image = this.image.overlay(flippedImage, rectangle.x, rectangle.y);
+        this.showCanvas(true);
+        this.hideToolPanel();
+    }
+
+    // Rotate clockwise
+    rotateCW() {
+        if (!this.isCurrentToolSelect()) {
+            this.image = this.image.rotateCW();
+            this.assignSelectRectangleFromCurrentImage();
+            this.showCanvas(true);
+            this.hideToolPanel();
+            return;
+        }
+        let rectangle = this.getToolRectangle();
+        if (rectangle.width != rectangle.height) {
+            console.log('Rotate is only available for square selections.');
+            return;
+        }
+        let cropImage = this.image.crop(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+        let rotatedImage = cropImage.rotateCW();
+        this.image = this.image.overlay(rotatedImage, rectangle.x, rectangle.y);
+        this.showCanvas(true);
+        this.hideToolPanel();
+    }
+
+    // Rotate counter clockwise
+    rotateCCW() {
+        if (!this.isCurrentToolSelect()) {
+            this.image = this.image.rotateCCW();
+            this.assignSelectRectangleFromCurrentImage();
+            this.showCanvas(true);
+            this.hideToolPanel();
+            return;
+        }
+        let rectangle = this.getToolRectangle();
+        if (rectangle.width != rectangle.height) {
+            console.log('Rotate is only available for square selections.');
+            return;
+        }
+        let cropImage = this.image.crop(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+        let rotatedImage = cropImage.rotateCCW();
+        this.image = this.image.overlay(rotatedImage, rectangle.x, rectangle.y);
+        this.showCanvas(true);
+        this.hideToolPanel();
+    }
+
+    // Move left with wrap around
+    moveLeft() {
+        let rectangle = this.getToolRectangle();
+        if (rectangle.width < 2) {
+            console.log('Move is only available when the width is 2 or greater.');
+            return;
+        }
+        let image0 = this.image.crop(rectangle.x, rectangle.y, 1, rectangle.height);
+        let image1 = this.image.crop(rectangle.x + 1, rectangle.y, rectangle.width - 1, rectangle.height);
+        this.image = this.image.overlay(image1, rectangle.x, rectangle.y);
+        this.image = this.image.overlay(image0, rectangle.x + rectangle.width - 1, rectangle.y);
+        this.showCanvas(true);
+        this.hideToolPanel();
+    }
+
+    // Move right with wrap around
+    moveRight() {
+        let rectangle = this.getToolRectangle();
+        if (rectangle.width < 2) {
+            console.log('Move is only available when the width is 2 or greater.');
+            return;
+        }
+        let image0 = this.image.crop(rectangle.x + rectangle.width - 1, rectangle.y, 1, rectangle.height);
+        let image1 = this.image.crop(rectangle.x, rectangle.y, rectangle.width - 1, rectangle.height);
+        this.image = this.image.overlay(image1, rectangle.x + 1, rectangle.y);
+        this.image = this.image.overlay(image0, rectangle.x, rectangle.y);
+        this.showCanvas(true);
+        this.hideToolPanel();
+    }
+
+    // Move up with wrap around
+    moveUp() {
+        let rectangle = this.getToolRectangle();
+        if (rectangle.height < 2) {
+            console.log('Move is only available when the height is 2 or greater.');
+            return;
+        }
+        let image0 = this.image.crop(rectangle.x, rectangle.y, rectangle.width, 1);
+        let image1 = this.image.crop(rectangle.x, rectangle.y + 1, rectangle.width, rectangle.height - 1);
+        this.image = this.image.overlay(image1, rectangle.x, rectangle.y);
+        this.image = this.image.overlay(image0, rectangle.x, rectangle.y + rectangle.height - 1);
+        this.showCanvas(true);
+        this.hideToolPanel();
+    }
+
+    // Move down with wrap around
+    moveDown() {
+        let rectangle = this.getToolRectangle();
+        if (rectangle.height < 2) {
+            console.log('Move is only available when the height is 2 or greater.');
+            return;
+        }
+        let image0 = this.image.crop(rectangle.x, rectangle.y + rectangle.height - 1, rectangle.width, 1);
+        let image1 = this.image.crop(rectangle.x, rectangle.y, rectangle.width, rectangle.height - 1);
+        this.image = this.image.overlay(image1, rectangle.x, rectangle.y + 1);
+        this.image = this.image.overlay(image0, rectangle.x, rectangle.y);
         this.showCanvas(true);
         this.hideToolPanel();
     }

@@ -162,6 +162,20 @@ body {
     display: none;
 }
 
+.tool-with-icon-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.tool-with-icon {
+    font-size: large;
+    font-weight: bold;
+    aspect-ratio: 1;
+    width: 6vw;
+    max-width: 60px;
+}
+
 @media only screen and (min-width: 600px) {
     #title_task {
         width: 250px;

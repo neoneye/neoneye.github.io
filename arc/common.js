@@ -174,7 +174,80 @@ class ARCImage {
                 ctx.fillRect(x0 + (x * cellSize), y0 + (y * cellSize), cellSize, cellSize);
             }
         }
-    }    
+    }
+
+    // Extract a sub-image from the image
+    crop(x, y, width, height) {
+        if (width < 1 || height < 1) {
+            throw new Error(`Invalid crop: size must be 1x1 or bigger. width=${width}, height=${height}`);
+        }
+        if (x < 0 || y < 0 || x + width > this.width || y + height > this.height) {
+            throw new Error(`Invalid crop: rectangle goes outside the image. x=${x}, y=${y}, width=${width}, height=${height}`);
+        }
+        let pixels = [];
+        for (let i = 0; i < height; i++) {
+            pixels.push(this.pixels[y + i].slice(x, x + width));
+        }
+        return new ARCImage(pixels);
+    }
+
+    // Reverse the image horizontally
+    flipX() {
+        let pixels = [];
+        for (var y = 0; y < this.height; y++) {
+            var row = [];
+            for (var x = this.width - 1; x >= 0; x--) {
+                row.push(this.pixels[y][x]);
+            }
+            pixels.push(row);
+        }
+        return new ARCImage(pixels);
+    }
+
+    // Reverse the image vertically
+    flipY() {
+        let pixels = [];
+        for (var y = this.height - 1; y >= 0; y--) {
+            pixels.push(this.pixels[y].slice());
+        }
+        return new ARCImage(pixels);
+    }
+
+    // Overlay another image on top of this image
+    overlay(other_image, x, y) {
+        let pixels = [];
+        for (let i = 0; i < this.height; i++) {
+            pixels.push(this.pixels[i].slice());
+        }
+        for (let i = 0; i < other_image.height; i++) {
+            for (let j = 0; j < other_image.width; j++) {
+                let yi = y + i;
+                let xj = x + j;
+                if (yi >= 0 && yi < this.height && xj >= 0 && xj < this.width) {
+                    pixels[yi][xj] = other_image.pixels[i][j];
+                }
+            }
+        }
+        return new ARCImage(pixels);
+    }
+
+    // Rotate the image 90 degrees clockwise
+    rotateCW() {
+        let pixels = [];
+        for (var x = 0; x < this.width; x++) {
+            var row = [];
+            for (var y = this.height - 1; y >= 0; y--) {
+                row.push(this.pixels[y][x]);
+            }
+            pixels.push(row);
+        }
+        return new ARCImage(pixels);
+    }
+
+    // Rotate the image 90 degrees counter-clockwise
+    rotateCCW() {
+        return this.rotateCW().rotateCW().rotateCW();
+    }
 }
 
 class ARCPair {
