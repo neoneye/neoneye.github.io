@@ -128,6 +128,10 @@ class PageController {
             resizeCanvas();
             this.showCanvas(true);
         });
+        window.addEventListener('orientationchange', () => {
+            resizeCanvas();
+            this.showCanvas(true);
+        });        
 
         // Interaction with the image canvas
         this.canvas.addEventListener('touchstart', (event) => { this.startDraw(event); }, false);
@@ -208,7 +212,6 @@ class PageController {
             }
         }
         if (event.code === 'KeyO') {
-            console.log('KeyO pressed');
             this.toggleOverlay();
         }
         if (event.code === 'KeyC') {
@@ -386,7 +389,7 @@ class PageController {
             this.showCanvas(false);
         }
         if(this.currentTool == 'fill') {
-            this.floodFillAt(cellx, celly);
+            this.floodFill(cellx, celly);
             this.showCanvas(false);
         }
     }
@@ -688,7 +691,7 @@ class PageController {
 
     toggleOverlay() {
         let el = document.getElementById("task-image");
-        if (el.style.visibility == "hidden") {
+        if (el.classList.contains('hidden')) {
             this.hideEditorShowOverlay();
         } else {
             this.hideOverlayShowEditor();
@@ -699,18 +702,22 @@ class PageController {
         let el0 = document.getElementById("task-image");
         let el1 = document.getElementById("draw-area-outer");
         let el2 = document.getElementById("page-footer-draw-mode");
-        el0.style.visibility = "hidden";
-        el1.style.visibility = "visible";
-        el2.style.visibility = "visible";
+        el0.classList.add('hidden');
+        el1.classList.remove('hidden');
+        el2.classList.remove('hidden');
+
+        // Sometimes the browser doesn't render the <canvas> after it's hidden and shown again.
+        resizeCanvas();
+        this.showCanvas(true);
     }
 
     hideEditorShowOverlay() {
         let el0 = document.getElementById("task-image");
         let el1 = document.getElementById("draw-area-outer");
         let el2 = document.getElementById("page-footer-draw-mode");
-        el0.style.visibility = "visible";
-        el1.style.visibility = "hidden";
-        el2.style.visibility = "hidden";
+        el0.classList.remove('hidden');
+        el1.classList.add('hidden');
+        el2.classList.add('hidden');
     }
 
     toggleFullscreen() {
@@ -749,11 +756,11 @@ class PageController {
         } else {
             el = document.getElementById('submit-status-incorrect');
         }
-        el.style.display = 'block';
+        el.classList.remove('hidden');
 
         // Hide status after 3 seconds
         setTimeout(() => {
-            el.style.display = 'none';
+            el.classList.add('hidden');
         }, 3000);
     }
 
@@ -857,35 +864,8 @@ class PageController {
         this.hideToolPanel();
     }
 
-    floodFillAt(x, y) {
-        let pixels = this.image.pixels;
-        if (x < 0 || x >= this.image.width) {
-            return;
-        }
-        if (y < 0 || y >= this.image.height) {
-            return;
-        }
-        let value = pixels[y][x];
-        this.floodFill(x, y, value, this.currentColor);
-    }
-
-    floodFill(x, y, sourceColor, targetColor) {
-        let pixels = this.image.pixels;
-        if (x < 0 || x >= this.image.width) {
-            return;
-        }
-        if (y < 0 || y >= this.image.height) {
-            return;
-        }
-        let value = pixels[y][x];
-        if ((value == targetColor) || (value != sourceColor)) {
-            return;
-        }
-        pixels[y][x] = targetColor;
-        this.floodFill(x-1, y, sourceColor, targetColor);
-        this.floodFill(x+1, y, sourceColor, targetColor);
-        this.floodFill(x, y-1, sourceColor, targetColor);
-        this.floodFill(x, y+1, sourceColor, targetColor);
+    floodFill(x, y) {
+        this.image.floodFill(x, y, this.currentColor);
     }
 
     getSelectedRectangleCoordinates() {

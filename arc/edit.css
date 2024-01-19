@@ -2,6 +2,17 @@ body {
     /* background-color: red; */
 }
 
+@media only screen and (min-width: 700px) {
+    body {
+        /* background-color: red; */
+    
+        /* Prevent page-footer from scrolling, due to the selected color in the palette extending beyond the bottom edge. */
+        overflow-y: hidden;
+        position: fixed;
+        width: 100%;
+    }
+}
+
 #main-inner {
     /* background-color: red; */
 }
@@ -30,10 +41,6 @@ body {
     left: 0;
     right: 0;
     z-index: 100;
-}
-
-#dragndrop-area-outer.hidden {
-    display: none !important;
 }
 
 #dragndrop-area-reject-button, #dragndrop-area-accept-button {
@@ -81,6 +88,7 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
+    overflow: hidden;
 }
 
 #tool-panel {
@@ -94,10 +102,6 @@ body {
     right: 0;
     z-index: 10;
     background-color: rgba(128, 128, 128, 0.7);
-}
-
-#tool-panel.hidden {
-    display: none !important;
 }
 
 #tool-panel-inner {
@@ -147,6 +151,15 @@ body {
 
 #palette {
     display: flex;
+    max-width: 40vw;
+    flex-wrap: wrap;
+}
+
+@media only screen and (min-width: 800px) {
+    #palette {
+        max-width: none;
+        flex-wrap: nowrap;
+    }
 }
 
 #palette div {
@@ -207,10 +220,6 @@ body {
     background-color: #870C25; /* brown */
 }
 
-#submit-status-correct, #submit-status-incorrect {
-    display: none;
-}
-
 .tool-with-icon-container {
     display: flex;
     justify-content: center;
@@ -230,4 +239,13 @@ body {
         width: 250px;
     }
 }
-  
+
+#dragndrop-area-outer.hidden,
+#task-image.hidden,
+#draw-area-outer.hidden,
+#page-footer-draw-mode.hidden,
+#tool-panel.hidden,
+#submit-status-correct.hidden, 
+#submit-status-incorrect.hidden {
+    display: none !important;
+}

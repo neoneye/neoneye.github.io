@@ -252,6 +252,34 @@ class ARCImage {
     rotateCCW() {
         return this.rotateCW().rotateCW().rotateCW();
     }
+
+    // Flood fill the image with a new color
+    floodFill(x, y, targetColor) {
+        // Helper function for the flood fill algorithm
+        const floodFillHelper = (x, y, sourceColor, targetColor) => {
+            if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
+                return;
+            }
+            let value = this.pixels[y][x];
+            if (value === targetColor || value !== sourceColor) {
+                return;
+            }
+            this.pixels[y][x] = targetColor;
+            floodFillHelper(x - 1, y, sourceColor, targetColor);
+            floodFillHelper(x + 1, y, sourceColor, targetColor);
+            floodFillHelper(x, y - 1, sourceColor, targetColor);
+            floodFillHelper(x, y + 1, sourceColor, targetColor);
+        };
+    
+        // Check if coordinates are within bounds
+        if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
+            return;
+        }
+    
+        // Get the source color and start the flood fill
+        let sourceColor = this.pixels[y][x];
+        floodFillHelper(x, y, sourceColor, targetColor);
+    }    
 }
 
 class ARCPair {

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="common.css">
     <link rel="stylesheet" href="edit.css">
@@ -84,22 +84,22 @@
 
     <header class="titlebar-container">
         <div class="titlebar-item titlebar-item-left">
-            <a class="seconday-button" href="#" onclick="goBack()">Back</a>
-            <button id="fullscreen-button" class="seconday-button" style="display: none" onclick="gPageController.toggleFullscreen()">F=Fullscreen</button>
+            <a class="secondary-button" href="#" onclick="goBack()">Back</a>
+            <button id="fullscreen-button" class="secondary-button" style="display: none" onclick="gPageController.toggleFullscreen()">F=Fullscreen</button>
         </div>
         
         <div class="titlebar-item titlebar-item-center" id="title_task">Task name</div>
         
         <div class="titlebar-item titlebar-item-right">
-            <button id="next-test-button" class="seconday-button hidden" onclick="gPageController.nextTest()">Next</button>
-            <button class="seconday-button" onclick="gPageController.toggleOverlay()">O=Overlay</button>
+            <button id="next-test-button" class="secondary-button hidden" onclick="gPageController.nextTest()">Next</button>
+            <button class="secondary-button" onclick="gPageController.toggleOverlay()">O=Overlay</button>
         </div>
     </header>
 
     <main id="main-outer">
         <div id="main-inner">
 
-            <img id="task-image"></img>
+            <img id="task-image" class="hidden"></img>
 
             <div id="draw-area-outer">
                 <canvas id="draw-area-canvas"></canvas>
@@ -111,7 +111,7 @@
     <footer id="page-footer-draw-mode">
         <div class="page-footer-left">
             <!-- Left -->
-            <button id="tool-button" class="seconday-button" onclick="gPageController.showToolPanel()">Tool: paint</button>
+            <button id="tool-button" class="secondary-button" onclick="gPageController.showToolPanel()">Tool: paint</button>
         </div>
         <div id="palette" class="page-footer-center">
             <div id="palette-item0" class="arc_color_0 palette_item_selected" onclick="gPageController.pickColor(0)"></div>
@@ -127,9 +127,9 @@
         </div>
         <div class="page-footer-right">
             <!-- Right -->
-            <button class="seconday-button" onclick="gPageController.submitDrawing()">Submit!</button>
-            <div id="submit-status-correct">&#128156; Correct</div>
-            <div id="submit-status-incorrect">&#128128; Incorrect</div>
+            <button class="secondary-button" onclick="gPageController.submitDrawing()">Submit!</button>
+            <div id="submit-status-correct" class="hidden">&#128156; Correct</div>
+            <div id="submit-status-incorrect" class="hidden">&#128128; Incorrect</div>
         </div>
     </footer>
 </body>

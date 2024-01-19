@@ -1,7 +1,9 @@
 :root {
-    --ui-separator: #000000;
+    --ui-separator: #0f0f0f;
     --ui-background: #1c1c1c;
     --ui-text-color: #cfcfcf;
+    --ui-header-background: #2c2c2c;
+    --ui-footer-background: #2c2c2c;
 }
 
 * {
@@ -103,24 +105,34 @@ body {
     background-color: #ccc;
     color: #666;
 }
-.seconday-button {
-    border: none;
-    color: var(--ui-text-color);
+.secondary-button {
+    background-color: transparent;
     border: 1px solid var(--ui-text-color);
     padding: 10px 18px;
+    border-radius: 5px;
+    font-size: 16px;
+    color: var(--ui-text-color);
     text-align: center;
     text-decoration: none;
-    font-size: 16px;
-    border-radius: 5px;
+    cursor: pointer;
+    outline: none;
+    -webkit-appearance: none; /* Removes inherent browser styling in WebKit browsers */
+    -moz-appearance: none; /* Removes inherent browser styling in Mozilla browsers */
+    appearance: none; /* General rule for modern browsers */
+    box-shadow: none; /* Removes any default browser box-shadow */
+    transition: background-color 0.3s, color 0.3s; /* Smooth transition for hover and active states */
 }
-.seconday-button:hover {
-    background-color: var(--ui-text-color);
-    color: var(--ui-background);
+@media (hover: hover) {
+    .secondary-button:hover {
+        background-color: var(--ui-text-color);
+        color: var(--ui-background);
+    }
 }
-.seconday-button:active {
+.secondary-button:active {
     background-color: #eaeaea;
     border: 1px solid rgb(34, 34, 34);
 }
+
 .page-footer-item {
     flex: 1;
 }
@@ -142,4 +154,12 @@ body {
     right: 0;
     box-sizing: border-box;
     overflow-y: scroll;
+}
+
+header {
+    background-color: var(--ui-header-background);
+}
+
+footer {
+    background-color: var(--ui-footer-background);
 }
