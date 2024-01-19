@@ -167,6 +167,10 @@ class ARCImage {
             let innerHeight = cellSize * this.height;
             y0 = drawY + height - innerHeight;
         }
+        this.drawInner(ctx, x0, y0, cellSize);
+    }
+
+    drawInner(ctx, x0, y0, cellSize) {
         for (let y = 0; y < this.height; y += 1) {
             for (let x = 0; x < this.width; x += 1) {
                 let pixel = this.pixels[y][x];

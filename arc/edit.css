@@ -20,9 +20,58 @@ body {
 #task-image {
     width: 100%;
     background-color: black;
-    /* z-index: 1; */
-    /* display: none; */
-    /* visibility: hidden; */
+}
+
+#dragndrop-area-outer {
+    position: absolute;
+    display: block;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+}
+
+#dragndrop-area-outer.hidden {
+    display: none !important;
+}
+
+#dragndrop-area-reject-button, #dragndrop-area-accept-button {
+    font-size: x-large;
+    font-weight: bold;
+    padding: 2em;
+    text-align: center;
+    text-decoration: none;
+    font-size: 16px;
+    border-radius: 0;
+}
+
+.hover-button {
+    color: var(--ui-background);
+    background-color: var(--ui-text-color);
+    border: none;
+}
+
+.hover-button:hover {
+    color: var(--ui-text-color);
+    background-color: var(--ui-background);
+}
+
+#dragndrop-area-accept-button {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+}
+
+#dragndrop-area-reject-button {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+}
+
+#dragndrop-area-canvas {
+    background-color: rgba(149, 149, 149, 0.734);
+    opacity: 0.9;
 }
 
 #draw-area-outer {

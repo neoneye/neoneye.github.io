@@ -13,23 +13,33 @@
     <title>ARC edit</title>
 </head>
 <body onload="body_onload()">
+    <div id="dragndrop-area-outer" class="hidden">
+        <canvas id="dragndrop-area-canvas"></canvas>
+        <button id="dragndrop-area-reject-button" class="hover-button" onclick="gPageController.pasteFromClipboardReject()" title="Abort the paste operation.">Reject</button>
+        <button id="dragndrop-area-accept-button" class="hover-button" onclick="gPageController.pasteFromClipboardAccept()" title="Enter = Finish the paste operation.">Accept</button>
+    </div>
+
     <div id="tool-panel" class="hidden" onclick="gPageController.dismissToolPanel(event)">
         <div id="tool-panel-inner">
             <div>
                 <h4>Canvas size (width x height)</h4>
                 <div>
-                    <input type="text" id="canvas-size-input" maxlength="10" value="3x3" placeholder="widthxheight" onkeydown="gPageController.canvasSizeInputOnKeyDown(event)">
-                    <button onclick="gPageController.resizeCanvas()" id="resize_btn" title="Apply the new size to the image">Resize</button>
+                    <input type="text" id="canvas-size-input" maxlength="10" value="3x3" placeholder="widthxheight" onkeydown="gPageController.resizeImageOnKeyDown(event)">
+                    <button onclick="gPageController.resizeImage()" id="resize_btn" title="Apply the new size to the image">Resize</button>
                 </div>
             </div>
             <hr>
             <button onclick="gPageController.copyInputCanvas()" title="Start over, using the entire input image">Copy from input</button>
             <hr>
             <button onclick="gPageController.resetWithCurrentColor()" title="Fill the entire image with the selected color">Reset</button>
-            <div id="crop-to-selected-rectangle-button" class="hidden">
+            <div id="crop-selected-rectangle-button" class="hidden">
                 <hr>
-                <button onclick="gPageController.cropWithSelectedRectangle()" title="Extract the selected rectangle">Crop</button>
+                <button onclick="gPageController.cropSelectedRectangle()" title="Extract the selected rectangle">Crop</button>
             </div>
+            <hr>
+            <button onclick="gPageController.copyToClipboard()" title="C = Copy to clipboard">Copy</button>
+            <hr>
+            <button onclick="gPageController.pasteFromClipboard()()" title="V = Paste from clipboard">Paste</button>
             <hr>
             <div class="tool-with-icon-container">
                 <button class="tool-with-icon" onclick="gPageController.flipX()" title="Flip X, or reverse the x-axis">
@@ -46,16 +56,16 @@
                 </button>
             </div>
             <div class="tool-with-icon-container">
-                <button class="tool-with-icon" onclick="gPageController.moveLeft()" title="Move left wrap around">
+                <button class="tool-with-icon" onclick="gPageController.moveLeft()" title="Arrow left = Move left wrap around">
                     <svg xmlns="http://www.w3.org/2000/svg" height="16" width="14" viewBox="0 0 448 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg>
                 </button>
-                <button class="tool-with-icon" onclick="gPageController.moveRight()" title="Move right wrap around">
+                <button class="tool-with-icon" onclick="gPageController.moveRight()" title="Arrow right = Move right wrap around">
                     <svg xmlns="http://www.w3.org/2000/svg" height="16" width="14" viewBox="0 0 448 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"/></svg>
                 </button>
-                <button class="tool-with-icon" onclick="gPageController.moveUp()" title="Move up wrap around">
+                <button class="tool-with-icon" onclick="gPageController.moveUp()" title="Arrow up = Move up wrap around">
                     <svg xmlns="http://www.w3.org/2000/svg" height="16" width="12" viewBox="0 0 384 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M214.6 41.4c-12.5-12.5-32.8-12.5-45.3 0l-160 160c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 141.2V448c0 17.7 14.3 32 32 32s32-14.3 32-32V141.2L329.4 246.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-160-160z"/></svg>
                 </button>
-                <button class="tool-with-icon" onclick="gPageController.moveDown()" title="Move down wrap around">
+                <button class="tool-with-icon" onclick="gPageController.moveDown()" title="Arrow down = Move down wrap around">
                     <svg xmlns="http://www.w3.org/2000/svg" height="16" width="12" viewBox="0 0 384 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M169.4 470.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 370.8 224 64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 306.7L54.6 265.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"/></svg>
                 </button>
             </div>
@@ -63,11 +73,11 @@
             <div id="tool-radio-buttons">
                 <h4>Tool</h4>
                 <input type="radio" id="tool_paint" name="tool_switching" value="paint" checked="">
-                <label for="tool_paint">Paint</label>
+                <label for="tool_paint" title="P = Paint tool">Paint</label>
                 <input type="radio" id="tool_select" name="tool_switching" value="select">
-                <label for="tool_select">Select</label>
+                <label for="tool_select" title="S = Select tool">Select</label>
                 <input type="radio" id="tool_fill" name="tool_switching" value="fill">
-                <label for="tool_fill">Fill</label>
+                <label for="tool_fill" title="L = Fill tool">Fill</label>
             </div>
         </div>
     </div>

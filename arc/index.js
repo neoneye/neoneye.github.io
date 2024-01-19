@@ -24,9 +24,9 @@ class PageController {
     async onload() {
         this.db = await initializeDatabase();
         console.log('PageController.onload()', this.db);
+        this.setupDatasetPicker();
         await this.loadTasks();
         // await this.loadNames();
-        this.setupDatasetPicker();
     }
 
     setupDatasetPicker() {

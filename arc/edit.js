@@ -72,12 +72,18 @@ class PageController {
         }
 
         this.canvas = document.getElementById('draw-area-canvas');
+        this.dragndropCanvas = document.getElementById('dragndrop-area-canvas');
         this.isDrawing = false;
         this.currentColor = 0;
         this.currentTest = 0;
         this.currentTool = 'paint';
         this.numberOfTests = 1;
         this.inset = 2;
+        this.clipboard = null;
+        this.isPasteMode = false;
+        this.isPasting = false;
+        this.pasteX = 0;
+        this.pasteY = 0;
 
         var pixels = [];
         let maxPixelSize = 100;
@@ -123,38 +129,26 @@ class PageController {
             this.showCanvas(true);
         });
 
-        this.canvas.addEventListener('touchstart', (event) => { this.startDrawing(event); }, false);
-        this.canvas.addEventListener('touchmove', (event) => { this.draw(event); }, false);
-        this.canvas.addEventListener('touchend', (event) => { this.stopDrawing(event); }, false);
-        this.canvas.addEventListener('mousedown', (event) => { this.startDrawing(event); }, false);
-        this.canvas.addEventListener('mousemove', (event) => { this.draw(event); }, false);
-        this.canvas.addEventListener('mouseup', (event) => { this.stopDrawing(event); }, false);
-        this.canvas.addEventListener('mouseout', (event) => { this.stopDrawing(event); }, false);
+        // Interaction with the image canvas
+        this.canvas.addEventListener('touchstart', (event) => { this.startDraw(event); }, false);
+        this.canvas.addEventListener('touchmove', (event) => { this.moveDraw(event); }, false);
+        this.canvas.addEventListener('touchend', (event) => { this.stopDraw(event); }, false);
+        this.canvas.addEventListener('mousedown', (event) => { this.startDraw(event); }, false);
+        this.canvas.addEventListener('mousemove', (event) => { this.moveDraw(event); }, false);
+        this.canvas.addEventListener('mouseup', (event) => { this.stopDraw(event); }, false);
+        this.canvas.addEventListener('mouseout', (event) => { this.stopDraw(event); }, false);
+
+        // Interaction with the dragndrop canvas
+        this.dragndropCanvas.addEventListener('touchstart', (event) => { this.startPaste(event); }, false);
+        this.dragndropCanvas.addEventListener('touchmove', (event) => { this.movePaste(event); }, false);
+        this.dragndropCanvas.addEventListener('touchend', (event) => { this.stopPaste(event); }, false);
+        this.dragndropCanvas.addEventListener('mousedown', (event) => { this.startPaste(event); }, false);
+        this.dragndropCanvas.addEventListener('mousemove', (event) => { this.movePaste(event); }, false);
+        this.dragndropCanvas.addEventListener('mouseup', (event) => { this.stopPaste(event); }, false);
+        this.dragndropCanvas.addEventListener('mouseout', (event) => { this.stopPaste(event); }, false);
 
         // Listen for the keyup event
-        window.addEventListener('keyup', (event) => {
-            if (event.code === 'KeyF') {
-                if (enableFullscreenMode()) {
-                    this.toggleFullscreen();
-                }
-            }
-            if (event.code === 'KeyO') {
-                this.toggleOverlay();
-            }
-            if (event.code === 'ArrowUp') {
-                this.moveUp();
-            }
-            if (event.code === 'ArrowDown') {
-                this.moveDown();
-            }
-            if (event.code === 'ArrowLeft') {
-                this.moveLeft();
-            }
-            if (event.code === 'ArrowRight') {
-                this.moveRight();
-            }
-            // console.log(event.code);
-        });
+        window.addEventListener('keyup', (event) => { this.keyUp(event); });
         
         document.addEventListener("fullscreenchange", (event) => {
             if (document.fullscreenElement) {
@@ -178,6 +172,74 @@ class PageController {
         });
     }
 
+    keyboardShortcutPickTool(radioButtonId) {
+        let el = document.getElementById(radioButtonId);
+        el.checked = true;
+        this.didPickTool(el.value);
+        this.hideToolPanel();
+    }
+
+    keyUp(event) {
+        // console.log(event.code);
+
+        // Get the currently focused element
+        let activeElement = document.activeElement;
+
+        // Check if the focused element is a text input or textarea
+        if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+            // If so, don't execute the rest of the keyUp function
+            // This allows normal behavior for text input, like moving the cursor
+            // console.log('Focused element is a text input or textarea', event.code);
+            return;
+        }
+
+        if (this.isPasteMode) {
+            // While the dragndrop canvas is visible, only the 'Enter' key is handled.
+            // All other keyboard interactions are ignored.
+            if (event.code === 'Enter') {
+                this.pasteFromClipboardAccept();
+            }
+            return;
+        }
+
+        if (event.code === 'KeyF') {
+            if (enableFullscreenMode()) {
+                this.toggleFullscreen();
+            }
+        }
+        if (event.code === 'KeyO') {
+            console.log('KeyO pressed');
+            this.toggleOverlay();
+        }
+        if (event.code === 'KeyC') {
+            this.copyToClipboard();
+        }
+        if (event.code === 'KeyV') {
+            this.pasteFromClipboard();
+        }
+        if (event.code === 'KeyP') {
+            this.keyboardShortcutPickTool('tool_paint');
+        }
+        if (event.code === 'KeyS') {
+            this.keyboardShortcutPickTool('tool_select');
+        }
+        if (event.code === 'KeyL') {
+            this.keyboardShortcutPickTool('tool_fill');
+        }
+        if (event.code === 'ArrowUp') {
+            this.moveUp();
+        }
+        if (event.code === 'ArrowDown') {
+            this.moveDown();
+        }
+        if (event.code === 'ArrowLeft') {
+            this.moveLeft();
+        }
+        if (event.code === 'ArrowRight') {
+            this.moveRight();
+        }
+    }
+
     didPickTool(toolId) {
         console.log('Selected Tool:', toolId);
         let el = document.getElementById('tool-button');
@@ -186,7 +248,7 @@ class PageController {
         this.showCanvas(true);
         this.hideToolPanel();
 
-        let el1 = document.getElementById('crop-to-selected-rectangle-button');
+        let el1 = document.getElementById('crop-selected-rectangle-button');
         if (this.isCurrentToolSelect()) {
             el1.classList.remove('hidden');
         } else {
@@ -208,7 +270,67 @@ class PageController {
         return { x: x, y: y };
     }
 
-    startDrawing(event) {
+    translateCoordinatesToSecondCanvas(firstCanvas, secondCanvas, x, y) {
+        // Get bounding rectangles of both canvases
+        let rectFirst = firstCanvas.getBoundingClientRect();
+        let rectSecond = secondCanvas.getBoundingClientRect();
+    
+        // Calculate the difference in position between the two canvases
+        let deltaX = rectSecond.left - rectFirst.left;
+        let deltaY = rectSecond.top - rectFirst.top;
+    
+        // If the canvases have different scales, calculate the scale factors
+        // (For example, if they have different dimensions but display the same content)
+        let scaleX = secondCanvas.width / rectSecond.width;
+        let scaleY = secondCanvas.height / rectSecond.height;
+    
+        // Adjust the coordinates
+        let newX = (x + deltaX) * scaleX;
+        let newY = (y + deltaY) * scaleY;
+    
+        return { x: newX, y: newY };
+    }
+
+    startPaste(event) {
+        if(!this.isPasteMode) {
+            console.error('Paste mode is not active, startPaste() should not be called.');
+            return;
+        }
+
+        event.preventDefault();
+        this.isPasting = true;
+        let position = this.getPosition(event);
+
+        this.pasteX = position.x;
+        this.pasteY = position.y;
+        // console.log('Paste mode. x:', this.pasteX, 'y:', this.pasteY);
+        this.showCanvas(true);
+    }
+
+    movePaste(event) {
+        if(!this.isPasteMode) {
+            console.error('Paste mode is not active, movePaste() should not be called.');
+            return;
+        }
+        if(!this.isPasting) {
+            return;
+        }
+
+        event.preventDefault();
+        let position = this.getPosition(event);
+
+        this.pasteX = position.x;
+        this.pasteY = position.y;
+        // console.log('Paste mode. x:', this.pasteX, 'y:', this.pasteY);
+        this.showCanvas(true);
+    }
+
+    stopPaste(event) {
+        event.preventDefault();
+        this.isPasting = false;
+    }
+
+    startDraw(event) {
         event.preventDefault();
         this.isDrawing = true;
         var ctx = this.canvas.getContext('2d');
@@ -216,6 +338,14 @@ class PageController {
         let xcellSize = 5;
         ctx.fillStyle = 'white';
         ctx.fillRect(position.x, position.y, xcellSize, xcellSize);
+
+        if(this.isPasteMode) {
+            this.pasteX = position.x;
+            this.pasteY = position.y;
+            // console.log('Paste mode. x:', this.pasteX, 'y:', this.pasteY);
+            this.showCanvas(true);
+            return;
+        }
 
         let width = this.canvas.width - this.inset * 2;
         let height = this.canvas.height - this.inset * 2;
@@ -261,7 +391,7 @@ class PageController {
         }
     }
 
-    draw(event) {
+    moveDraw(event) {
         event.preventDefault();
         if (!this.isDrawing) {
             return;
@@ -271,6 +401,14 @@ class PageController {
         let xcellSize = 5;
         ctx.fillStyle = 'grey';
         ctx.fillRect(position.x, position.y, xcellSize, xcellSize);
+
+        if(this.isPasteMode) {
+            this.pasteX = position.x;
+            this.pasteY = position.y;
+            // console.log('Paste mode. x:', this.pasteX, 'y:', this.pasteY);
+            this.showCanvas(true);
+            return;
+        }
 
         let width = this.canvas.width - this.inset * 2;
         let height = this.canvas.height - this.inset * 2;
@@ -307,7 +445,7 @@ class PageController {
         }
     }
 
-    stopDrawing(event) {
+    stopDraw(event) {
         event.preventDefault();
         this.isDrawing = false;
         // var ctx = this.canvas.getContext('2d');
@@ -472,7 +610,7 @@ class PageController {
         image.draw(ctx, inset, inset, width, height, cellSize, {});
 
         // Draw the dashed select rectangle
-        if (isSelectTool) {
+        if (isSelectTool && !this.isPasteMode) {
             let { minX, maxX, minY, maxY } = this.getSelectedRectangleCoordinates();
             // console.log('minX', minX, 'maxX', maxX, 'minY', minY, 'maxY', maxY);
 
@@ -483,22 +621,69 @@ class PageController {
             let drawWidth = (maxX - minX + 1) * cellSize;
             let drawHeight = (maxY - minY + 1) * cellSize;
 
-            // First draw a solid white rectangle
-            ctx.beginPath();
-            ctx.setLineDash([]);
-            ctx.strokeStyle = 'white';
-            ctx.lineWidth = 2;
-            ctx.rect(x - 1, y - 1, drawWidth, drawHeight);
-            ctx.stroke();
-
-            // Then draw a dashed black rectangle
-            ctx.beginPath();
-            ctx.setLineDash([4, 4]);
-            ctx.strokeStyle = 'black';
-            ctx.lineWidth = 2;
-            ctx.rect(x - 1, y - 1, drawWidth, drawHeight);
-            ctx.stroke();
+            this.drawDashedRectangle(ctx, x, y, drawWidth, drawHeight);
         }
+
+        if (this.isPasteMode) {
+            if (this.clipboard) {
+                const ctx2 = this.dragndropCanvas.getContext('2d');
+                ctx2.clearRect(0, 0, this.dragndropCanvas.width, this.dragndropCanvas.height);
+
+                let pasteX = this.pasteX;
+                let pasteY = this.pasteY;
+                let clipboardImage = this.clipboard;
+                let halfWidth = Math.floor(clipboardImage.width * cellSize / 2);
+                let halfHeight = Math.floor(clipboardImage.height * cellSize / 2);
+                let minXRaw = pasteX - halfWidth;
+                let minYRaw = pasteY - halfHeight;
+                let position2 = this.translateCoordinatesToSecondCanvas(this.dragndropCanvas, this.canvas, minXRaw, minYRaw);
+                let drawX = Math.floor(position2.x);
+                let drawY = Math.floor(position2.y);
+                ctx.globalAlpha = 0.75;
+                clipboardImage.drawInner(ctx2, drawX, drawY, cellSize);
+                ctx.globalAlpha = 1;
+
+                let x0 = image.calcX0(0, width, cellSize) + inset;
+                let y0 = image.calcY0(0, height, cellSize) + inset;
+
+                var minX = Math.floor((pasteX - halfWidth - x0) / cellSize + 0.5);
+                var minY = Math.floor((pasteY - halfHeight - y0) / cellSize + 0.5);
+                var maxX = minX + clipboardImage.width - 1;
+                var maxY = minY + clipboardImage.height - 1;
+
+                minX = Math.max(0, minX);
+                minY = Math.max(0, minY);
+                maxX = Math.min(image.width - 1, maxX);
+                maxY = Math.min(image.height - 1, maxY);
+    
+                let x = image.calcX0(minX * cellSize + inset, width, cellSize);
+                let y = image.calcY0(minY * cellSize + inset, height, cellSize);
+        
+                let drawWidth = (maxX - minX + 1) * cellSize;
+                let drawHeight = (maxY - minY + 1) * cellSize;
+                if (drawWidth > 0 && drawHeight > 0) {
+                    this.drawDashedRectangle(ctx, x, y, drawWidth, drawHeight);
+                }
+            }
+        }
+    }
+
+    drawDashedRectangle(ctx, x, y, width, height) {
+        // First draw a solid white rectangle
+        ctx.beginPath();
+        ctx.setLineDash([]);
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.rect(x - 1, y - 1, width, height);
+        ctx.stroke();
+
+        // Then draw a dashed black rectangle
+        ctx.beginPath();
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 2;
+        ctx.rect(x - 1, y - 1, width, height);
+        ctx.stroke();    
     }
 
     toggleOverlay() {
@@ -581,7 +766,7 @@ class PageController {
         this.showCanvas(true);
     }
 
-    getCanvasSize() {
+    getWidthHeightFromTextfield() {
         let sizeInput = document.getElementById('canvas-size-input').value;
     
         // Split the string at 'x'
@@ -612,16 +797,16 @@ class PageController {
         return { width, height };
     }
     
-    canvasSizeInputOnKeyDown(event) {
+    resizeImageOnKeyDown(event) {
         // Check if the key pressed is 'Enter'
         if (event.key === 'Enter' || event.keyCode === 13) {
             // Call the function you want to execute when Enter is pressed
-            this.resizeCanvas();
+            this.resizeImage();
         }
     }
 
-    resizeCanvas() {
-        let size = this.getCanvasSize();
+    resizeImage() {
+        let size = this.getWidthHeightFromTextfield();
         if (!size) {
             console.error('Unable to determine the size');
             return;
@@ -711,7 +896,7 @@ class PageController {
         return { minX, maxX, minY, maxY };
     }
 
-    cropWithSelectedRectangle() {
+    cropSelectedRectangle() {
         if (!this.isCurrentToolSelect()) {
             console.log('Crop is only available in select mode.');
             return;
@@ -732,6 +917,95 @@ class PageController {
         this.assignSelectRectangleFromCurrentImage();
         this.showCanvas(true);
         this.hideToolPanel();
+    }
+
+    copyToClipboard() {
+        let rectangle = this.getToolRectangle();
+        let cropImage = this.image.crop(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+        this.clipboard = cropImage;
+        this.hideToolPanel();
+        console.log(`Copied to clipboard. width: ${cropImage.width}, height: ${cropImage.height}`);
+    }
+
+    pasteFromClipboard() {
+        if (!this.clipboard) {
+            console.log('Paste from clipboard. Clipboard is empty');
+            return;
+        }
+        let image = this.clipboard;
+        console.log(`Paste from clipboard. width: ${image.width}, height: ${image.height}`);
+        this.pasteX = this.canvas.width / 2;
+        this.pasteY = this.canvas.height / 2;
+        this.hideToolPanel();
+        this.isPasteMode = true;
+        this.showDragndropArea();
+        resizeCanvas();
+        this.showCanvas(true);
+    }
+
+    showDragndropArea() {
+        let el = document.getElementById('dragndrop-area-outer');
+        el.classList.remove('hidden');
+    }
+
+    hideDragndropArea() {
+        let el = document.getElementById('dragndrop-area-outer');
+        el.classList.add('hidden');
+    }
+
+    pasteFromClipboardAccept() {
+        if (!this.clipboard) {
+            console.log('Paste from clipboard accept. Clipboard is empty');
+            return;
+        }
+        if (!this.isPasteMode) {
+            console.log('Paste from clipboard accept. Not in paste mode');
+            return;
+        }
+        console.log('Paste from clipboard accept.');
+
+        let canvasWidth = this.canvas.width;
+        let canvasHeight = this.canvas.height;
+        let inset = this.inset;
+        let width = canvasWidth - inset * 2;
+        let height = canvasHeight - inset * 2;
+
+        let image = this.image;
+        let cellSize = image.cellSize(width, height);
+
+        let pasteX = this.pasteX;
+        let pasteY = this.pasteY;
+        let clipboardImage = this.clipboard;
+        let halfWidth = Math.floor(clipboardImage.width * cellSize / 2);
+        let halfHeight = Math.floor(clipboardImage.height * cellSize / 2);
+
+        let x0 = image.calcX0(0, width, cellSize) + inset;
+        let y0 = image.calcY0(0, height, cellSize) + inset;
+
+        var minX = Math.floor((pasteX - halfWidth - x0) / cellSize + 0.5);
+        var minY = Math.floor((pasteY - halfHeight - y0) / cellSize + 0.5);
+
+        this.image = this.image.overlay(clipboardImage, minX, minY);
+        this.isPasteMode = false;
+
+        let clampedX0 = Math.max(0, Math.min(minX, this.image.width - 1));
+        let clampedY0 = Math.max(0, Math.min(minY, this.image.height - 1));
+        let clampedX1 = Math.max(0, Math.min(minX + clipboardImage.width - 1, this.image.width - 1));
+        let clampedY1 = Math.max(0, Math.min(minY + clipboardImage.height - 1, this.image.height - 1));
+        this.selectRectangle.x0 = clampedX0;
+        this.selectRectangle.y0 = clampedY0;
+        this.selectRectangle.x1 = clampedX1;
+        this.selectRectangle.y1 = clampedY1;
+
+        this.showCanvas(true);
+        this.hideDragndropArea();
+    }
+
+    pasteFromClipboardReject() {
+        console.log('Paste from clipboard reject.');
+        this.isPasteMode = false;
+        this.showCanvas(true);
+        this.hideDragndropArea();
     }
 
     // Get either the selected rectangle or the rectangle for the entire image
@@ -923,8 +1197,16 @@ function body_onload() {
 }
 
 function resizeCanvas() {
-    let canvas = document.getElementById('draw-area-canvas');
-    let parentDiv = document.getElementById('draw-area-outer');    
-    canvas.width = parentDiv.clientWidth;
-    canvas.height = parentDiv.clientHeight;
+    {
+        let canvas = document.getElementById('draw-area-canvas');
+        let parentDiv = document.getElementById('draw-area-outer');    
+        canvas.width = parentDiv.clientWidth;
+        canvas.height = parentDiv.clientHeight;
+    }
+    {
+        let canvas = document.getElementById('dragndrop-area-canvas');
+        let parentDiv = document.getElementById('dragndrop-area-outer');    
+        canvas.width = parentDiv.clientWidth;
+        canvas.height = parentDiv.clientHeight;
+    }
 }
