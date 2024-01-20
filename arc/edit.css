@@ -127,6 +127,16 @@ body {
     width: 8ch;
 }
 
+#tool-panel-crop-copy-paste {
+    display: flex;
+    justify-content: space-between; /* Aligns children with space between them */
+    gap: 10px; /* Space between the buttons */
+}
+
+#tool-panel-crop-copy-paste button {
+    flex: 1; /* Each button will take equal space */
+}
+
 #page-footer-draw-mode {
     border-top: 1px solid var(--ui-separator);
     display: grid;
@@ -248,7 +258,8 @@ body {
 #page-footer-draw-mode.hidden,
 #tool-panel.hidden,
 #submit-status-correct.hidden, 
-#submit-status-incorrect.hidden {
+#submit-status-incorrect.hidden,
+#crop-selected-rectangle-button.hidden {
     display: none !important;
 }
 

@@ -68,7 +68,7 @@ class PageController {
 
         if (enableFullscreenMode()) {
             let el = document.getElementById('fullscreen-button');
-            el.style.display = 'inline-block';
+            el.classList.remove('hidden');
         }
 
         this.canvas = document.getElementById('draw-area-canvas');
@@ -844,22 +844,8 @@ class PageController {
         this.hideToolPanel();
     }
 
-    copyInputCanvas() {
+    startOverWithInputImage() {
         this.assignImageFromCurrentTest();
-        this.showCanvas(true);
-        this.hideToolPanel();
-    }
-
-    resetWithCurrentColor() {
-        let pixels = [];
-        for (var y = 0; y < this.image.height; y++) {
-            var row = [];
-            for (var x = 0; x < this.image.width; x++) {
-                row.push(this.currentColor);
-            }
-            pixels.push(row);
-        }
-        this.image = new ARCImage(pixels);
         this.showCanvas(true);
         this.hideToolPanel();
     }

@@ -22,22 +22,21 @@
     <div id="tool-panel" class="hidden" onclick="gPageController.dismissToolPanel(event)">
         <div id="tool-panel-inner">
             <div id="tool-panel-inner-inner">
+                <button class="secondary-button" onclick="gPageController.startOverWithInputImage()" title="Go back to the original image">Start over 🥶🙀🙈</button>
+                <hr>
                 <div>
-                    <h4>Canvas size (width x height)</h4>
+                    <h4>Change image size (width x height)</h4>
                     <div>
                         <input type="text" id="canvas-size-input" maxlength="10" value="3x3" placeholder="widthxheight" onkeydown="gPageController.resizeImageOnKeyDown(event)">
-                        <button onclick="gPageController.resizeImage()" id="resize_btn" title="Apply the new size to the image">Resize</button>
+                        <button class="secondary-button" onclick="gPageController.resizeImage()" id="resize_btn" title="Apply the new size to the image">Resize</button>
                     </div>
                 </div>
-                <button onclick="gPageController.copyInputCanvas()" title="Start over, using the entire input image">Copy from input</button>
-                <button onclick="gPageController.resetWithCurrentColor()" title="Fill the entire image with the selected color">Reset</button>
-                <div id="crop-selected-rectangle-button" class="hidden">
-                    <hr>
-                    <button onclick="gPageController.cropSelectedRectangle()" title="Extract the selected rectangle">Crop</button>
-                </div>
                 <hr>
-                <button onclick="gPageController.copyToClipboard()" title="C = Copy to clipboard">Copy</button>
-                <button onclick="gPageController.pasteFromClipboard()()" title="V = Paste from clipboard">Paste</button>
+                <div id="tool-panel-crop-copy-paste">
+                    <button class="secondary-button" onclick="gPageController.copyToClipboard()" title="C = Copy to clipboard">Copy</button>
+                    <button class="secondary-button" onclick="gPageController.pasteFromClipboard()()" title="V = Paste from clipboard">Paste</button>
+                    <button id="crop-selected-rectangle-button" class="secondary-button hidden" onclick="gPageController.cropSelectedRectangle()" title="Extract the selected rectangle">Crop</button>
+                </div>
                 <hr>
 
                 <div class="tool-with-icon-container">
@@ -95,7 +94,7 @@
     <header class="titlebar-container">
         <div class="titlebar-item titlebar-item-left">
             <a class="secondary-button" href="#" onclick="goBack()">Back</a>
-            <button id="fullscreen-button" class="secondary-button" style="display: none" onclick="gPageController.toggleFullscreen()">F=Fullscreen</button>
+            <button id="fullscreen-button" class="secondary-button hidden" onclick="gPageController.toggleFullscreen()">F=Fullscreen</button>
         </div>
         
         <div class="titlebar-item titlebar-item-center" id="title_task">Task name</div>
