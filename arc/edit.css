@@ -105,8 +105,8 @@ body {
 }
 
 #tool-panel-inner {
-    width: 50vw;
-    height: 50vh;
+    width: 60vw;
+    height: 60vh;
     display: block;
     background-color: grey;
     opacity: 1;
@@ -115,9 +115,11 @@ body {
     padding: 0.5em;
 }
 
-#tool-radio-buttons {
-    position: absolute;
-    bottom: 5px;
+#tool-panel-inner-inner {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Aligns children with space between them */
+    height: 100%; /* Set the height to fill the parent container */
 }
 
 #canvas-size-input {
@@ -248,4 +250,48 @@ body {
 #submit-status-correct.hidden, 
 #submit-status-incorrect.hidden {
     display: none !important;
+}
+
+.segmented-control {
+    display: flex;
+    width: 100%;
+    margin: 2em 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.segmented-control__item {
+    flex: 1; /* Each item will take equal space */
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+    box-sizing: border-box;
+}
+
+.segmented-control__input {
+    position: absolute;
+    visibility: hidden;
+}
+
+.segmented-control__label {
+    display: block;
+    margin: 0 -1px -1px 0; /* -1px margin removes double-thickness borders between items */
+    padding: 1em .25em;
+    border: 1px solid #ddd;
+    font: 14px/1.5 sans-serif; 
+    text-align: center;  
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.segmented-control__input:checked + .segmented-control__label {
+    background: #eee;
+    color: #333; 
+}
+
+@media (hover: hover) and (pointer: fine) {
+    /* Desktops with mouse */
+    .segmented-control__label:hover {
+        background: #fafafa;
+    }
 }
