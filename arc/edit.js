@@ -78,6 +78,7 @@ class PageController {
         this.currentTest = 0;
         this.currentTool = 'paint';
         this.numberOfTests = 1;
+        this.userDrawnImages = {};
         this.inset = 2;
         this.clipboard = null;
         this.isPasteMode = false;
@@ -119,7 +120,7 @@ class PageController {
         console.log('PageController.onload()', this.db);
         await this.loadTask();
         this.addEventListeners();
-        this.hideOverlayShowEditor();
+        this.hideEditorShowOverlay();
     }
 
     addEventListeners() {
@@ -513,7 +514,7 @@ class PageController {
         }
         this.task = task;
         this.numberOfTests = task.test.length;
-        await this.showTask(task);
+        this.showTask(task);
 
         this.assignImageFromCurrentTest();
         this.showCanvas(true);
@@ -553,23 +554,191 @@ class PageController {
         return null;
     }
 
-    async showTask(task) {
+    showTask(task) {
         console.log('Show task:', task);
 
-        let count = task.train.length + task.test.length;
-        let extraWide = (count > 6);
-                
-        let insetValue = 0;
-        let canvas = task.toCanvas(insetValue, extraWide);
-        let dataURL = canvas.toDataURL();
+        this.populateTable(task);
+    }
 
-        let el_nextButton = document.getElementById('next-test-button');
-        if (this.numberOfTests >= 2) {
-            el_nextButton.classList.remove('hidden');
+    calcCellSize(task) {
+        let el = document.getElementById('main-inner');
+        let width = el.clientWidth;
+        let height = el.clientHeight;
+
+        let heightOfNonImage = 40;
+        let separatorWidth = 10;
+        let paddingWidth = (task.train.length + task.test.length) * 20;
+        let widthOfNonImage = separatorWidth + paddingWidth;
+
+        var sumPixelWidth = 0;
+        for (let i = 0; i < task.train.length; i++) {
+            let input = task.train[i].input;
+            let output = task.train[i].output;
+            sumPixelWidth += Math.max(input.width, output.width);
+        }
+        for (let i = 0; i < task.test.length; i++) {
+            let input = task.test[i].input;
+            var output = this.imageForTestIndex(i);
+            if (!output) {
+                output = input;
+            }
+            sumPixelWidth += Math.max(input.width, output.width);
         }
 
-        let el_img = document.getElementById('task-image');
-        el_img.src = dataURL;
+        var maxPixelHeight = 0;
+        for (let i = 0; i < task.train.length; i++) {
+            let input = task.train[i].input;
+            let output = task.train[i].output;
+            let pixelHeight = input.height + output.height;
+            maxPixelHeight = Math.max(maxPixelHeight, pixelHeight);
+        }
+        for (let i = 0; i < task.test.length; i++) {
+            let input = task.test[i].input;
+            var output = this.imageForTestIndex(i);
+            if (!output) {
+                output = input;
+            }
+            let pixelHeight = input.height + output.height;
+            maxPixelHeight = Math.max(maxPixelHeight, pixelHeight);
+        }
+
+        let cellSizeX = Math.floor((width - widthOfNonImage) / sumPixelWidth);
+        let cellSizeY = Math.floor((height - heightOfNonImage) / maxPixelHeight);
+        let cellSize = Math.min(cellSizeX, cellSizeY);
+        return cellSize;
+    }
+
+    populateTable(task) {
+        let cellSize = this.calcCellSize(task);
+
+        let el_tr0 = document.getElementById('mytable-row0');
+        let el_tr1 = document.getElementById('mytable-row1');
+        let el_tr2 = document.getElementById('mytable-row2');
+
+        // Remove all children
+        el_tr0.innerText = '';
+        el_tr1.innerText = '';
+        el_tr2.innerText = '';
+
+        for (let i = 0; i < task.train.length; i++) {
+            let input = task.train[i].input;
+            let output = task.train[i].output;
+            let el_td0 = document.createElement('td');
+            let el_td1 = document.createElement('td');
+            let el_td2 = document.createElement('td');
+            // el_td0.innerText = `Train ${i + 1}`;
+            // el_td1.innerText = `Input ${i + 1}`;
+            // el_td2.innerText = `Output ${i + 1}`;
+
+            {
+                el_td0.classList.add('center-x');
+                el_td0.innerText = `Train ${i + 1}`;
+            }
+
+            {
+                el_td1.classList.add('input-image-cell');
+                el_td1.classList.add('center-x');
+
+                let el_img = document.createElement('img');
+                let canvas = input.toCanvasWithCellSize(cellSize);
+                let dataURL = canvas.toDataURL();
+                el_img.src = dataURL;
+                el_td1.appendChild(el_img);
+            }
+
+            {
+                el_td2.classList.add('output-image-cell');
+                el_td2.classList.add('center-x');
+
+                let el_img = document.createElement('img');
+                let canvas = output.toCanvasWithCellSize(cellSize);
+                let dataURL = canvas.toDataURL();
+                el_img.src = dataURL;
+                el_td2.appendChild(el_img);
+            }
+            el_tr0.appendChild(el_td0);
+            el_tr1.appendChild(el_td1);
+            el_tr2.appendChild(el_td2);
+        }
+
+        {
+            let el_td0 = document.createElement('td');
+            el_td0.innerHTML = '&nbsp;';
+            el_td0.classList.add('seperator-column');
+            el_td0.rowSpan = 3;
+            el_tr0.appendChild(el_td0);
+        }
+
+        for (let i = 0; i < task.test.length; i++) {
+            let input = task.test[i].input;
+            let el_td0 = document.createElement('td');
+            let el_td1 = document.createElement('td');
+            let el_td2 = document.createElement('td');
+            // el_td0.innerText = `Test ${i + 1}`;
+            // el_td1.innerText = `Input ${i + 1}`;
+            // el_td2.innerText = `Output ${i + 1}`;
+
+            if (i == this.currentTest) {
+                el_td0.classList.add('active-test');
+                el_td1.classList.add('active-test');
+                el_td2.classList.add('active-test');
+                let handler = () => {
+                    this.hideOverlayShowEditor();
+                };
+                el_td0.onclick = handler;
+                el_td1.onclick = handler;
+                el_td2.onclick = handler;
+            } else {
+                el_td0.classList.add('click-to-active-test');
+                el_td1.classList.add('click-to-active-test');
+                el_td2.classList.add('click-to-active-test');
+                let handler = () => {
+                    this.activateTestIndex(i);
+                };
+                el_td0.onclick = handler;
+                el_td1.onclick = handler;
+                el_td2.onclick = handler;
+            }
+
+            {
+                el_td0.classList.add('center-x');
+                el_td0.innerText = `Test ${i + 1}`;
+            }
+
+            {
+                el_td1.classList.add('input-image-cell');
+                el_td1.classList.add('center-x');
+
+                let el_img = document.createElement('img');
+                let canvas = input.toCanvasWithCellSize(cellSize);
+                let dataURL = canvas.toDataURL();
+                el_img.src = dataURL;
+                el_td1.appendChild(el_img);
+            }
+
+            {
+                el_td2.classList.add('output-image-cell');
+                el_td2.classList.add('center-x');
+                el_td2.classList.add('test-output-cell');
+
+                var output = this.imageForTestIndex(i);
+                if (!output) {
+                    el_td2.innerText = `?`;
+                } else {
+
+                    let el_img = document.createElement('img');
+                    let canvas = output.toCanvasWithCellSize(cellSize);
+                    let dataURL = canvas.toDataURL();
+                    el_img.src = dataURL;
+                    el_td2.appendChild(el_img);
+    
+                }
+    
+            }
+            el_tr0.appendChild(el_td0);
+            el_tr1.appendChild(el_td1);
+            el_tr2.appendChild(el_td2);
+        }
     }
 
     isCurrentToolSelect() {
@@ -690,7 +859,7 @@ class PageController {
     }
 
     toggleOverlay() {
-        let el = document.getElementById("task-image");
+        let el = document.getElementById("mytable");
         if (el.classList.contains('hidden')) {
             this.hideEditorShowOverlay();
         } else {
@@ -699,7 +868,7 @@ class PageController {
     }
 
     hideOverlayShowEditor() {
-        let el0 = document.getElementById("task-image");
+        let el0 = document.getElementById("mytable");
         let el1 = document.getElementById("draw-area-outer");
         let el2 = document.getElementById("page-footer-draw-mode");
         el0.classList.add('hidden');
@@ -712,12 +881,15 @@ class PageController {
     }
 
     hideEditorShowOverlay() {
-        let el0 = document.getElementById("task-image");
+        let el0 = document.getElementById("mytable");
         let el1 = document.getElementById("draw-area-outer");
         let el2 = document.getElementById("page-footer-draw-mode");
         el0.classList.remove('hidden');
         el1.classList.add('hidden');
         el2.classList.add('hidden');
+
+        this.takeSnapshotOfCurrentImage();
+        this.populateTable(this.task);
     }
 
     toggleFullscreen() {
@@ -764,11 +936,29 @@ class PageController {
         }, 3000);
     }
 
-    nextTest() {
+    takeSnapshotOfCurrentImage() {
+        let pixels = JSON.parse(JSON.stringify(this.image.pixels));
+        let newImage = new ARCImage(pixels);
+        this.userDrawnImages[this.currentTest] = newImage;
+    }
+
+    imageForTestIndex(testIndex) {
+        let image = this.userDrawnImages[testIndex];
+        if (!image) {
+            return null;
+        }
+        let pixels = JSON.parse(JSON.stringify(image.pixels));
+        let newImage = new ARCImage(pixels);
+        return newImage;
+    }
+
+    activateTestIndex(testIndex) {
+        this.takeSnapshotOfCurrentImage();
         let value0 = this.currentTest;
-        this.currentTest = (this.currentTest + 1) % this.numberOfTests;
+        this.currentTest = testIndex % this.numberOfTests;
         let value1 = this.currentTest;
-        console.log(`Next test: ${value0} -> ${value1}`);
+        console.log(`Activate test: ${value0} -> ${value1}`);
+        this.populateTable(this.task);
         this.assignImageFromCurrentTest();
         this.showCanvas(true);
     }

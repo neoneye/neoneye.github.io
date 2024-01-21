@@ -122,20 +122,22 @@ class ARCImage {
     }
 
     toCanvas() {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = this.width;
-        canvas.height = this.height;
+        let cellSize = 1;
+        return this.toCanvasWithCellSize(cellSize);
+    }
     
-        const cellSize = 1;
-        for (let y = 0; y < this.height; y += cellSize) {
-            for (let x = 0; x < this.width; x += cellSize) {
+    toCanvasWithCellSize(cellSize) {
+        let canvas = document.createElement('canvas');
+        let ctx = canvas.getContext('2d');
+        canvas.width = this.width * cellSize;
+        canvas.height = this.height * cellSize;
+        for (let y = 0; y < this.height; y += 1) {
+            for (let x = 0; x < this.width; x += 1) {
                 let pixel = this.pixels[y][x];
                 ctx.fillStyle = color_palette[pixel];
-                ctx.fillRect(x, y, cellSize, cellSize);
+                ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
             }
         }
-    
         return canvas;
     }
     
