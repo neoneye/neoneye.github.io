@@ -1145,6 +1145,17 @@ class PageController {
     showPasteArea() {
         let el = document.getElementById('paste-area-outer');
         el.classList.remove('hidden');
+
+        // When the paste layer is visible, there are two big buttons visible:
+        // "Reject" - abort the paste operation.
+        // "Accept" - confirm paste at the position. The keyboard shortcut is the "Enter" key.
+        //
+        // Firefox Desktop issue:
+        // However if the user have previously clicked on another button beforehand,
+        // then that previous button still has keyboard focus, and the "Enter" key performs a click on that previous button.
+        // This is not what we want. We want the "Enter" key to perform a click on the "Accept" button.
+        // Thus we remove the keyboard focus from all buttons.
+        this.blurAllButtons();
     }
 
     hidePasteArea() {
@@ -1205,6 +1216,13 @@ class PageController {
         this.isPasteMode = false;
         this.updateDrawCanvas(true);
         this.hidePasteArea();
+    }
+
+    blurAllButtons() {
+        document.getElementById('fullscreen-button').blur();
+        document.getElementById('grid-button').blur();
+        document.getElementById('overview-button').blur();
+        document.getElementById('submit-button').blur();
     }
 
     // Get either the selected rectangle or the rectangle for the entire image

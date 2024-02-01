@@ -99,7 +99,7 @@
         <div class="titlebar-item titlebar-item-center" id="title_task">Task name</div>
         
         <div class="titlebar-item titlebar-item-right">
-            <button class="secondary-button" onclick="gPageController.toggleOverview()" title="O = Toggle between overview and editor.">Overview</button>
+            <button id="overview-button" class="secondary-button" onclick="gPageController.toggleOverview()" title="O = Toggle between overview and editor.">Overview</button>
         </div>
     </header>
 
@@ -140,7 +140,7 @@
         </div>
         <div class="page-footer-right">
             <!-- Right -->
-            <button class="secondary-button" onclick="gPageController.submitDrawing()">Submit!</button>
+            <button id="submit-button" class="secondary-button" onclick="gPageController.submitDrawing()">Submit!</button>
             <div id="submit-status-correct" class="hidden">&#128156; Correct</div>
             <div id="submit-status-incorrect" class="hidden">&#128128; Incorrect</div>
         </div>
