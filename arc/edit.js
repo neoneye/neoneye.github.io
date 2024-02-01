@@ -1154,8 +1154,8 @@ class PageController {
         // However if the user have previously clicked on another button beforehand,
         // then that previous button still has keyboard focus, and the "Enter" key performs a click on that previous button.
         // This is not what we want. We want the "Enter" key to perform a click on the "Accept" button.
-        // Thus we remove the keyboard focus from all buttons.
-        this.blurAllButtons();
+        // Thus keyboard focus to the "Accept" button.
+        document.getElementById('paste-area-accept-button').focus();
     }
 
     hidePasteArea() {
@@ -1216,13 +1216,6 @@ class PageController {
         this.isPasteMode = false;
         this.updateDrawCanvas(true);
         this.hidePasteArea();
-    }
-
-    blurAllButtons() {
-        document.getElementById('fullscreen-button').blur();
-        document.getElementById('grid-button').blur();
-        document.getElementById('overview-button').blur();
-        document.getElementById('submit-button').blur();
     }
 
     // Get either the selected rectangle or the rectangle for the entire image
