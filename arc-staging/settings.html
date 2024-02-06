@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="settings.css">
+    <link rel="shortcut icon" type="image/png" href="img/favicon.png">
+    <script src="common.js"></script>
+    <script src="settings.js"></script>
+    <title>Settings - ARC-Interactive</title>
+</head>
+<body onload="body_onload()">
+    <header class="titlebar-container">
+        <div class="titlebar-item titlebar-item-left">
+            <a class="secondary-button" href=".">Tasks</a>
+        </div>
+        
+        <div class="titlebar-item titlebar-item-center">Settings</div>
+        
+        <div class="titlebar-item titlebar-item-right">
+            <!-- <a class="secondary-button" href="">Do nothing</a> -->
+        </div>
+    </header>
+
+    <main id="main-outer">
+        <div id="main-inner">
+
+            <h2>Color Theme</h2>
+
+            <div id="select-theme-outer">
+                <label for="theme" id="theme-label">Please select:</label><br>
+                <select name="theme" id="select-theme">
+                    <option value="default">Original ARC Colors</option>
+                    <option value="paultolmuted">Tol Muted</option>
+                    <option value="c64">C64</option>
+                    <option value="secam">SECAM</option>
+                    <option value="ega">EGA</option>
+                    <option value="amigaworkbench13">Amiga Workbench 1.3</option>
+                    <option value="applerainbow">Apple Rainbow Logo</option>
+                    <option value="romanfresco">Roman Fresco</option>
+                    <option value="paultolsequential">Brown Orange White</option>
+                    <option value="bluecyanwhite">Blue Cyan White</option>
+                    <option value="greyscale">Grey Scale</option>
+                </select> 
+            </div>
+
+            <div id="theme-preview-outer">
+                <button id="shuffle-colors-button" onclick="gPageController.shuffleColors()" title="Shuffle colors"><div id="preview-theme-table">empty</div></button>
+    
+                <div>10 different colors</div>
+            </div>
+
+            <hr>
+            <h1 id="advanced-settings">Advanced Settings</h1>
+            <div id="callback-url-outer">
+                <h3>Callback URL</h3>
+                <label for="callback-url" id="callback-url-label">Please insert:</label><br>
+                <input type="text" id="callback-url" name="callback-url" maxlength="100" placeholder="https://example.com:1234/arc-interactive-callback.html" onkeydown="gPageController.callbackUrlOnKeyDown(event)">
+                <p>Examples:</p>
+                <ul>
+                    <li>https://example.com/arc-interactive-callback.html</li>
+                    <li>http://localhost:8080/task/TASKID</li>
+                    <li>http://localhost:8080/dataset/DATASETID/task/TASKID</li>
+                    <li>http://192.168.1.5:1234/arc-interactive-callback</li>
+                </ul>
+                <p>TASKID gets replaced with the task id.</p>
+                <p>DATASETID gets replaced with the dataset id.</p>
+            </div>
+
+        </div>
+    </main>
+</body>
+</html>
