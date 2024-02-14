@@ -1,3 +1,4 @@
+// Provided by Jack Cole (parapraxis).
 const META_ARC_CATEGORY_50 = {
     "1": [
       "0934a4d8",
