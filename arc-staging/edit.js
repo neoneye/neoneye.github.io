@@ -100,28 +100,34 @@ class Caretaker {
         });
     }
 
+    canUndo() {
+        return this.undoList.length > 0;
+    }
+
+    canRedo() {
+        return this.redoList.length > 0;
+    }
+
     undo(originator) {
-        if (this.undoList.length > 0) {
-            const memento = this.undoList.pop();
-            const actionName = memento.getActionName();
-            this.redoList.push(originator.saveStateToMemento(`Undo ${actionName}`)); // save current state before undoing
-            originator.getStateFromMemento(memento);
-            console.log(`Undid action: ${actionName}`);
-        } else {
-            console.log('No actions to undo.');
+        if (!this.canUndo()) {
+            throw new Error("No actions to undo. undoList is empty");
         }
+        let memento = this.undoList.pop();
+        let actionName = memento.getActionName();
+        this.redoList.push(originator.saveStateToMemento(actionName)); // save current state before undoing
+        originator.getStateFromMemento(memento);
+        return actionName;
     }
 
     redo(originator) {
-        if (this.redoList.length > 0) {
-            const memento = this.redoList.pop();
-            const actionName = memento.getActionName();
-            this.undoList.push(originator.saveStateToMemento(`Redo ${actionName}`)); // save current state before redoing
-            originator.getStateFromMemento(memento);
-            console.log(`Redid action: ${actionName}`);
-        } else {
-            console.log('No actions to redo.');
+        if (!this.canRedo()) {
+            throw new Error("No actions to redo. redoList is empty");
         }
+        let memento = this.redoList.pop();
+        let actionName = memento.getActionName();
+        this.undoList.push(originator.saveStateToMemento(actionName)); // save current state before redoing
+        originator.getStateFromMemento(memento);
+        return actionName;
     }
 }
 
@@ -482,17 +488,53 @@ class PageController {
     undoAction() {
         console.log('Undo action');
         let drawingItem = this.currentDrawingItem();
-        drawingItem.caretaker.undo(drawingItem.originator);
+
+        if (!drawingItem.caretaker.canUndo()) {
+            console.log('No actions to undo.');
+            return;
+        }
+
+        let historyImageHandle = drawingItem.getHistoryImageHandle();
+        let actionName = drawingItem.caretaker.undo(drawingItem.originator);
+        let image = drawingItem.originator.getImageClone();
         this.updateDrawCanvas();
         this.hideToolPanel();
+
+        console.log(`Undid action: ${actionName}`);
+        let message = `undo, modified image`;
+        this.history.log(message, {
+            action: 'undo',
+            actionName: actionName,
+            imageHandle: historyImageHandle,
+            modified: 'image',
+            image: image.pixels,
+        });
     }
 
     redoAction() {
         console.log('Redo action');
         let drawingItem = this.currentDrawingItem();
-        drawingItem.caretaker.redo(drawingItem.originator);
+
+        if (!drawingItem.caretaker.canRedo()) {
+            console.log('No actions to redo.');
+            return;
+        }
+
+        let historyImageHandle = drawingItem.getHistoryImageHandle();
+        let actionName = drawingItem.caretaker.redo(drawingItem.originator);
+        let image = drawingItem.originator.getImageClone();
         this.updateDrawCanvas();
         this.hideToolPanel();
+
+        console.log(`Redid action: ${actionName}`);
+        let message = `redo, modified image`;
+        this.history.log(message, {
+            action: 'redo',
+            actionName: actionName,
+            imageHandle: historyImageHandle,
+            modified: 'image',
+            image: image.pixels,
+        });
     }
 
     getPosition(event) {
@@ -831,6 +873,10 @@ class PageController {
         if (minY < 0 || maxY >= originalImage.height) {
             return;
         }
+        let selectionX = minX;
+        let selectionY = minY;
+        let selectionWidth = maxX - minX + 1;
+        let selectionHeight = maxY - minY + 1;
         let color = this.currentColor;
         var image = originalImage.clone();
         for (let y = minY; y <= maxY; y++) {
@@ -841,15 +887,15 @@ class PageController {
         if (image.isEqualTo(originalImage)) {
             console.log('The image is the same after filling the selection.');
 
-            let message = `fill selection minX: ${minX} minY: ${minY} maxX: ${maxX} maxY: ${maxY} color: ${color}, no change to image`;
+            let message = `fill selection x: ${selectionX} y: ${selectionY} width: ${selectionWidth} height: ${selectionHeight} color: ${color}, no change to image`;
             this.history.log(message, {
                 action: 'fill selection',
                 imageHandle: historyImageHandle,
                 modified: 'none',
-                minX: minX,
-                minY: minY,
-                maxX: maxX,
-                maxY: maxY,
+                x: selectionX,
+                y: selectionY,
+                width: selectionWidth,
+                height: selectionHeight,
                 color: color,
                 image: image.pixels,
             });
@@ -859,15 +905,15 @@ class PageController {
         drawingItem.originator.setImage(image);
         this.updateDrawCanvas();
 
-        let message = `fill selection minX: ${minX} minY: ${minY} maxX: ${maxX} maxY: ${maxY} color: ${color}, modified image`;
+        let message = `fill selection x: ${selectionX} y: ${selectionY} width: ${selectionWidth} height: ${selectionHeight} color: ${color}, modified image`;
         this.history.log(message, {
             action: 'fill selection',
             imageHandle: historyImageHandle,
             modified: 'image',
-            minX: minX,
-            minY: minY,
-            maxX: maxX,
-            maxY: maxY,
+            x: selectionX,
+            y: selectionY,
+            width: selectionWidth,
+            height: selectionHeight,
             color: color,
             image: image.pixels,
         });
@@ -1584,19 +1630,23 @@ class PageController {
         if (minY < 0 || maxY >= originalImage.height) {
             return;
         }
-        let image = originalImage.crop(minX, minY, maxX - minX + 1, maxY - minY + 1);
+        let cropX = minX;
+        let cropY = minY;
+        let cropWidth = maxX - minX + 1;
+        let cropHeight = maxY - minY + 1;
+        let image = originalImage.crop(cropX, cropY, cropWidth, cropHeight);
         if (image.isEqualTo(originalImage)) {
             console.log('The image is the same after crop.');
 
-            let message = `crop minX: ${minX} minY: ${minY} maxX: ${maxX} maxY: ${maxY}, no change to image`;
+            let message = `crop x: ${cropX} y: ${cropY} width: ${cropWidth} height: ${cropHeight}, no change to image`;
             this.history.log(message, {
                 action: 'crop',
                 imageHandle: historyImageHandle,
                 modified: 'none',
-                minX: minX,
-                minY: minY,
-                maxX: maxX,
-                maxY: maxY,
+                x: cropX,
+                y: cropY,
+                width: cropWidth,
+                height: cropHeight,
                 image: image.pixels,
             });
 
@@ -1609,15 +1659,15 @@ class PageController {
         this.updateDrawCanvas();
         this.hideToolPanel();
 
-        let message = `crop minX: ${minX} minY: ${minY} maxX: ${maxX} maxY: ${maxY}, modified image`;
+        let message = `crop x: ${cropX} y: ${cropY} width: ${cropWidth} height: ${cropHeight}, modified image`;
         this.history.log(message, {
             action: 'crop',
             imageHandle: historyImageHandle,
             modified: 'image',
-            minX: minX,
-            minY: minY,
-            maxX: maxX,
-            maxY: maxY,
+            x: cropX,
+            y: cropY,
+            width: cropWidth,
+            height: cropHeight,
             image: image.pixels,
         });
     }
@@ -1653,11 +1703,22 @@ class PageController {
         console.log(`Paste from clipboard. width: ${image.width}, height: ${image.height}`);
         this.pasteCenterX = this.drawCanvas.width / 2;
         this.pasteCenterY = this.drawCanvas.height / 2;
+        let drawingItem = this.currentDrawingItem();
+        let historyImageHandle = drawingItem.getHistoryImageHandle();
         this.hideToolPanel();
         this.isPasteMode = true;
         this.showPasteArea();
         resizeCanvas();
         this.updateDrawCanvas();
+
+        let message = `paste begin width: ${image.width} height: ${image.height}, no change to image`;
+        this.history.log(message, {
+            action: 'paste begin',
+            imageHandle: historyImageHandle,
+            modified: 'none',
+            width: image.width,
+            height: image.height,
+        });
     }
 
     showPasteArea() {
@@ -1804,6 +1865,7 @@ class PageController {
     flipX() {
         let rectangle = this.getToolRectangle();
         let drawingItem = this.currentDrawingItem();
+        let historyImageHandle = drawingItem.getHistoryImageHandle();
         let originalImage = drawingItem.originator.getImageClone();
         let cropImage = originalImage.crop(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
         let flippedImage = cropImage.flipX();
@@ -1811,18 +1873,43 @@ class PageController {
         if (image.isEqualTo(originalImage)) {
             console.log('The image is the same after flip x.');
             this.hideToolPanel();
+
+            let message = `flip x-axis x: ${rectangle.x} y: ${rectangle.y} width: ${rectangle.width} height: ${rectangle.height}, no change to image`;
+            this.history.log(message, {
+                action: 'flip x',
+                imageHandle: historyImageHandle,
+                modified: 'none',
+                x: rectangle.x,
+                y: rectangle.y,
+                width: rectangle.width,
+                height: rectangle.height,
+                image: image.pixels,
+            });
             return;
         }
         drawingItem.caretaker.saveState(drawingItem.originator, 'flip x for selection or entire image');
         drawingItem.originator.setImage(image);
         this.updateDrawCanvas();
         this.hideToolPanel();
+
+        let message = `flip x-axis x: ${rectangle.x} y: ${rectangle.y} width: ${rectangle.width} height: ${rectangle.height}, modified image`;
+        this.history.log(message, {
+            action: 'flip x',
+            imageHandle: historyImageHandle,
+            modified: 'image',
+            x: rectangle.x,
+            y: rectangle.y,
+            width: rectangle.width,
+            height: rectangle.height,
+            image: image.pixels,
+        });
     }
 
     // Reverse the y-axis of the selected rectangle or the entire image
     flipY() {
         let rectangle = this.getToolRectangle();
         let drawingItem = this.currentDrawingItem();
+        let historyImageHandle = drawingItem.getHistoryImageHandle();
         let originalImage = drawingItem.originator.getImageClone();
         let cropImage = originalImage.crop(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
         let flippedImage = cropImage.flipY();
@@ -1830,12 +1917,36 @@ class PageController {
         if (image.isEqualTo(originalImage)) {
             console.log('The image is the same after flip y.');
             this.hideToolPanel();
+
+            let message = `flip y-axis x: ${rectangle.x} y: ${rectangle.y} width: ${rectangle.width} height: ${rectangle.height}, no change to image`;
+            this.history.log(message, {
+                action: 'flip y',
+                imageHandle: historyImageHandle,
+                modified: 'none',
+                x: rectangle.x,
+                y: rectangle.y,
+                width: rectangle.width,
+                height: rectangle.height,
+                image: image.pixels,
+            });
             return;
         }
         drawingItem.caretaker.saveState(drawingItem.originator, 'flip y for selection or entire image');
         drawingItem.originator.setImage(image);
         this.updateDrawCanvas();
         this.hideToolPanel();
+
+        let message = `flip y-axis x: ${rectangle.x} y: ${rectangle.y} width: ${rectangle.width} height: ${rectangle.height}, modified image`;
+        this.history.log(message, {
+            action: 'flip y',
+            imageHandle: historyImageHandle,
+            modified: 'image',
+            x: rectangle.x,
+            y: rectangle.y,
+            width: rectangle.width,
+            height: rectangle.height,
+            image: image.pixels,
+        });
     }
 
     // Rotate clockwise
@@ -1848,34 +1959,78 @@ class PageController {
     }
 
     rotateCW_selection() {
+        let drawingItem = this.currentDrawingItem();
+        let historyImageHandle = drawingItem.getHistoryImageHandle();
+        let originalImage = drawingItem.originator.getImageClone();
+
         let rectangle = this.getToolRectangle();
         if (rectangle.width != rectangle.height) {
             console.log('Rotate is only available for square selections.');
+            let message = `rotate selection clockwise x: ${rectangle.x} y: ${rectangle.y} width: ${rectangle.width} height: ${rectangle.height}, cannot rotate non-square selection, no change to image`;
+            this.history.log(message, {
+                action: 'rotate selection clockwise',
+                imageHandle: historyImageHandle,
+                modified: 'none',
+                x: rectangle.x,
+                y: rectangle.y,
+                width: rectangle.width,
+                height: rectangle.height,
+                image: originalImage.pixels,
+            });
             return;
         }
-        let drawingItem = this.currentDrawingItem();
-        let originalImage = drawingItem.originator.getImageClone();
         let cropImage = originalImage.crop(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
         let rotatedImage = cropImage.rotateCW();
         let image = originalImage.overlay(rotatedImage, rectangle.x, rectangle.y);
         if (image.isEqualTo(originalImage)) {
             console.log('The image is the same after rotate.');
             this.hideToolPanel();
+            let message = `rotate selection clockwise x: ${rectangle.x} y: ${rectangle.y} width: ${rectangle.width} height: ${rectangle.height}, no change to image`;
+            this.history.log(message, {
+                action: 'rotate selection clockwise',
+                imageHandle: historyImageHandle,
+                modified: 'none',
+                x: rectangle.x,
+                y: rectangle.y,
+                width: rectangle.width,
+                height: rectangle.height,
+                image: image.pixels,
+            });
             return;
         }
         drawingItem.caretaker.saveState(drawingItem.originator, 'rotate clockwise selection');
         drawingItem.originator.setImage(image);
         this.updateDrawCanvas();
         this.hideToolPanel();
+
+        let message = `rotate selection clockwise x: ${rectangle.x} y: ${rectangle.y} width: ${rectangle.width} height: ${rectangle.height}, modified image`;
+        this.history.log(message, {
+            action: 'rotate selection clockwise',
+            imageHandle: historyImageHandle,
+            modified: 'image',
+            x: rectangle.x,
+            y: rectangle.y,
+            width: rectangle.width,
+            height: rectangle.height,
+            image: image.pixels,
+        });
     }
 
     rotateCW_entireImage() {
         let drawingItem = this.currentDrawingItem();
+        let historyImageHandle = drawingItem.getHistoryImageHandle();
         let originalImage = drawingItem.originator.getImageClone();
         let image = originalImage.rotateCW();
         if (image.isEqualTo(originalImage)) {
             console.log('The image is the same after rotate.');
             this.hideToolPanel();
+            let message = `rotate image clockwise, no change to image`;
+            this.history.log(message, {
+                action: 'rotate image clockwise',
+                imageHandle: historyImageHandle,
+                modified: 'none',
+                image: image.pixels,
+            });
             return;
         }
         drawingItem.caretaker.saveState(drawingItem.originator, 'rotate clockwise entire image');
@@ -1883,6 +2038,14 @@ class PageController {
         drawingItem.assignSelectRectangleFromCurrentImage();
         this.updateDrawCanvas();
         this.hideToolPanel();
+
+        let message = `rotate image clockwise, modified image`;
+        this.history.log(message, {
+            action: 'rotate image clockwise',
+            imageHandle: historyImageHandle,
+            modified: 'image',
+            image: image.pixels,
+        });
     }
 
     // Rotate counter clockwise
@@ -1895,34 +2058,78 @@ class PageController {
     }
 
     rotateCCW_selection() {
+        let drawingItem = this.currentDrawingItem();
+        let historyImageHandle = drawingItem.getHistoryImageHandle();
+        let originalImage = drawingItem.originator.getImageClone();
+
         let rectangle = this.getToolRectangle();
         if (rectangle.width != rectangle.height) {
             console.log('Rotate is only available for square selections.');
+            let message = `rotate selection counter-clockwise x: ${rectangle.x} y: ${rectangle.y} width: ${rectangle.width} height: ${rectangle.height}, cannot rotate non-square selection, no change to image`;
+            this.history.log(message, {
+                action: 'rotate selection counter-clockwise',
+                imageHandle: historyImageHandle,
+                modified: 'none',
+                x: rectangle.x,
+                y: rectangle.y,
+                width: rectangle.width,
+                height: rectangle.height,
+                image: originalImage.pixels,
+            });
             return;
         }
-        let drawingItem = this.currentDrawingItem();
-        let originalImage = drawingItem.originator.getImageClone();
         let cropImage = originalImage.crop(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
         let rotatedImage = cropImage.rotateCCW();
         let image = originalImage.overlay(rotatedImage, rectangle.x, rectangle.y);
         if (image.isEqualTo(originalImage)) {
             console.log('The image is the same after rotate.');
             this.hideToolPanel();
+            let message = `rotate selection counter-clockwise x: ${rectangle.x} y: ${rectangle.y} width: ${rectangle.width} height: ${rectangle.height}, no change to image`;
+            this.history.log(message, {
+                action: 'rotate selection counter-clockwise',
+                imageHandle: historyImageHandle,
+                modified: 'none',
+                x: rectangle.x,
+                y: rectangle.y,
+                width: rectangle.width,
+                height: rectangle.height,
+                image: image.pixels,
+            });
             return;
         }
         drawingItem.caretaker.saveState(drawingItem.originator, 'rotate counter-clockwise selection');
         drawingItem.originator.setImage(image);
         this.updateDrawCanvas();
         this.hideToolPanel();
+
+        let message = `rotate selection counter-clockwise x: ${rectangle.x} y: ${rectangle.y} width: ${rectangle.width} height: ${rectangle.height}, modified image`;
+        this.history.log(message, {
+            action: 'rotate selection counter-clockwise',
+            imageHandle: historyImageHandle,
+            modified: 'image',
+            x: rectangle.x,
+            y: rectangle.y,
+            width: rectangle.width,
+            height: rectangle.height,
+            image: image.pixels,
+        });
     }
 
     rotateCCW_entireImage() {
         let drawingItem = this.currentDrawingItem();
+        let historyImageHandle = drawingItem.getHistoryImageHandle();
         let originalImage = drawingItem.originator.getImageClone();
         let image = originalImage.rotateCCW();
         if (image.isEqualTo(originalImage)) {
             console.log('The image is the same after rotate.');
             this.hideToolPanel();
+            let message = `rotate image counter-clockwise, no change to image`;
+            this.history.log(message, {
+                action: 'rotate image counter-clockwise',
+                imageHandle: historyImageHandle,
+                modified: 'none',
+                image: image.pixels,
+            });
             return;
         }
         drawingItem.caretaker.saveState(drawingItem.originator, 'rotate counter-clockwise entire image');
@@ -1930,102 +2137,178 @@ class PageController {
         drawingItem.assignSelectRectangleFromCurrentImage();
         this.updateDrawCanvas();
         this.hideToolPanel();
+
+        let message = `rotate image counter-clockwise, modified image`;
+        this.history.log(message, {
+            action: 'rotate image counter-clockwise',
+            imageHandle: historyImageHandle,
+            modified: 'image',
+            image: image.pixels,
+        });
     }
 
     // Move left with wrap around
     moveLeft() {
-        let rectangle = this.getToolRectangle();
-        if (rectangle.width < 2) {
-            console.log('Move is only available when the width is 2 or greater.');
-            return;
-        }
         let drawingItem = this.currentDrawingItem();
+        let historyImageHandle = drawingItem.getHistoryImageHandle();
         let originalImage = drawingItem.originator.getImageClone();
-        let image0 = originalImage.crop(rectangle.x, rectangle.y, 1, rectangle.height);
-        let image1 = originalImage.crop(rectangle.x + 1, rectangle.y, rectangle.width - 1, rectangle.height);
-        let image2 = originalImage.overlay(image1, rectangle.x, rectangle.y);
-        let image3 = image2.overlay(image0, rectangle.x + rectangle.width - 1, rectangle.y);
-        if (image3.isEqualTo(originalImage)) {
+        let rectangle = this.getToolRectangle();
+        let image = originalImage.moveLeft(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+        if (image.isEqualTo(originalImage)) {
             console.log('The image is the same after the move.');
             this.hideToolPanel();
+            let message = `move left x: ${rectangle.x} y: ${rectangle.y} width: ${rectangle.width} height: ${rectangle.height}, no change to image`;
+            this.history.log(message, {
+                action: 'move left',
+                imageHandle: historyImageHandle,
+                modified: 'none',
+                x: rectangle.x,
+                y: rectangle.y,
+                width: rectangle.width,
+                height: rectangle.height,
+                image: image.pixels,
+            });
             return;
         }
         drawingItem.caretaker.saveState(drawingItem.originator, 'move left');
-        drawingItem.originator.setImage(image3);
+        drawingItem.originator.setImage(image);
         this.updateDrawCanvas();
         this.hideToolPanel();
+
+        let message = `move left x: ${rectangle.x} y: ${rectangle.y} width: ${rectangle.width} height: ${rectangle.height}, modified image`;
+        this.history.log(message, {
+            action: 'move left',
+            imageHandle: historyImageHandle,
+            modified: 'image',
+            x: rectangle.x,
+            y: rectangle.y,
+            width: rectangle.width,
+            height: rectangle.height,
+            image: image.pixels,
+        });
     }
 
     // Move right with wrap around
     moveRight() {
-        let rectangle = this.getToolRectangle();
-        if (rectangle.width < 2) {
-            console.log('Move is only available when the width is 2 or greater.');
-            return;
-        }
         let drawingItem = this.currentDrawingItem();
+        let historyImageHandle = drawingItem.getHistoryImageHandle();
         let originalImage = drawingItem.originator.getImageClone();
-        let image0 = originalImage.crop(rectangle.x + rectangle.width - 1, rectangle.y, 1, rectangle.height);
-        let image1 = originalImage.crop(rectangle.x, rectangle.y, rectangle.width - 1, rectangle.height);
-        let image2 = originalImage.overlay(image1, rectangle.x + 1, rectangle.y);
-        let image3 = image2.overlay(image0, rectangle.x, rectangle.y);
-        if (image3.isEqualTo(originalImage)) {
+        let rectangle = this.getToolRectangle();
+        let image = originalImage.moveRight(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+        if (image.isEqualTo(originalImage)) {
             console.log('The image is the same after the move.');
             this.hideToolPanel();
+            let message = `move right x: ${rectangle.x} y: ${rectangle.y} width: ${rectangle.width} height: ${rectangle.height}, no change to image`;
+            this.history.log(message, {
+                action: 'move right',
+                imageHandle: historyImageHandle,
+                modified: 'none',
+                x: rectangle.x,
+                y: rectangle.y,
+                width: rectangle.width,
+                height: rectangle.height,
+                image: image.pixels,
+            });
             return;
         }
         drawingItem.caretaker.saveState(drawingItem.originator, 'move right');
-        drawingItem.originator.setImage(image3);
+        drawingItem.originator.setImage(image);
         this.updateDrawCanvas();
         this.hideToolPanel();
+
+        let message = `move right x: ${rectangle.x} y: ${rectangle.y} width: ${rectangle.width} height: ${rectangle.height}, modified image`;
+        this.history.log(message, {
+            action: 'move right',
+            imageHandle: historyImageHandle,
+            modified: 'image',
+            x: rectangle.x,
+            y: rectangle.y,
+            width: rectangle.width,
+            height: rectangle.height,
+            image: image.pixels,
+        });
     }
 
     // Move up with wrap around
     moveUp() {
-        let rectangle = this.getToolRectangle();
-        if (rectangle.height < 2) {
-            console.log('Move is only available when the height is 2 or greater.');
-            return;
-        }
         let drawingItem = this.currentDrawingItem();
+        let historyImageHandle = drawingItem.getHistoryImageHandle();
         let originalImage = drawingItem.originator.getImageClone();
-        let image0 = originalImage.crop(rectangle.x, rectangle.y, rectangle.width, 1);
-        let image1 = originalImage.crop(rectangle.x, rectangle.y + 1, rectangle.width, rectangle.height - 1);
-        let image2 = originalImage.overlay(image1, rectangle.x, rectangle.y);
-        let image3 = image2.overlay(image0, rectangle.x, rectangle.y + rectangle.height - 1);
-        if (image3.isEqualTo(originalImage)) {
+        let rectangle = this.getToolRectangle();
+        let image = originalImage.moveUp(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+        if (image.isEqualTo(originalImage)) {
             console.log('The image is the same after the move.');
             this.hideToolPanel();
+            let message = `move up x: ${rectangle.x} y: ${rectangle.y} width: ${rectangle.width} height: ${rectangle.height}, no change to image`;
+            this.history.log(message, {
+                action: 'move up',
+                imageHandle: historyImageHandle,
+                modified: 'none',
+                x: rectangle.x,
+                y: rectangle.y,
+                width: rectangle.width,
+                height: rectangle.height,
+                image: image.pixels,
+            });
             return;
         }
         drawingItem.caretaker.saveState(drawingItem.originator, 'move up');
-        drawingItem.originator.setImage(image3);
+        drawingItem.originator.setImage(image);
         this.updateDrawCanvas();
         this.hideToolPanel();
+
+        let message = `move up x: ${rectangle.x} y: ${rectangle.y} width: ${rectangle.width} height: ${rectangle.height}, modified image`;
+        this.history.log(message, {
+            action: 'move up',
+            imageHandle: historyImageHandle,
+            modified: 'image',
+            x: rectangle.x,
+            y: rectangle.y,
+            width: rectangle.width,
+            height: rectangle.height,
+            image: image.pixels,
+        });
     }
 
     // Move down with wrap around
     moveDown() {
-        let rectangle = this.getToolRectangle();
-        if (rectangle.height < 2) {
-            console.log('Move is only available when the height is 2 or greater.');
-            return;
-        }
         let drawingItem = this.currentDrawingItem();
+        let historyImageHandle = drawingItem.getHistoryImageHandle();
         let originalImage = drawingItem.originator.getImageClone();
-        let image0 = originalImage.crop(rectangle.x, rectangle.y + rectangle.height - 1, rectangle.width, 1);
-        let image1 = originalImage.crop(rectangle.x, rectangle.y, rectangle.width, rectangle.height - 1);
-        let image2 = originalImage.overlay(image1, rectangle.x, rectangle.y + 1);
-        let image3 = image2.overlay(image0, rectangle.x, rectangle.y);
-        if (image3.isEqualTo(originalImage)) {
+        let rectangle = this.getToolRectangle();
+        let image = originalImage.moveDown(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+        if (image.isEqualTo(originalImage)) {
             console.log('The image is the same after the move.');
             this.hideToolPanel();
+            let message = `move down x: ${rectangle.x} y: ${rectangle.y} width: ${rectangle.width} height: ${rectangle.height}, no change to image`;
+            this.history.log(message, {
+                action: 'move down',
+                imageHandle: historyImageHandle,
+                modified: 'none',
+                x: rectangle.x,
+                y: rectangle.y,
+                width: rectangle.width,
+                height: rectangle.height,
+                image: image.pixels,
+            });
             return;
         }
         drawingItem.caretaker.saveState(drawingItem.originator, 'move down');
-        drawingItem.originator.setImage(image3);
+        drawingItem.originator.setImage(image);
         this.updateDrawCanvas();
         this.hideToolPanel();
+
+        let message = `move down x: ${rectangle.x} y: ${rectangle.y} width: ${rectangle.width} height: ${rectangle.height}, modified image`;
+        this.history.log(message, {
+            action: 'move down',
+            imageHandle: historyImageHandle,
+            modified: 'image',
+            x: rectangle.x,
+            y: rectangle.y,
+            width: rectangle.width,
+            height: rectangle.height,
+            image: image.pixels,
+        });
     }
 
     showToolPanel() {
