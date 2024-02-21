@@ -186,6 +186,7 @@ class HistoryContainer {
     constructor() {
         this.items = [];
         this.lastEventTime = null; // Tracks the time of the last event.
+        this.startTime = new Date(); // Tracks the time when the history was created.
     }
 
     log(message, context = null) {
@@ -221,9 +222,21 @@ class HistoryContainer {
     }
 }
 
+class DrawInteractionState {
+    constructor(key) {
+        this.key = key;
+        this.registerCount = 0;
+    }
+
+    register() {
+        this.registerCount++;
+    }
+}
+
 class PageController {
     constructor() {
         this.history = new HistoryContainer();
+        this.drawInteractionState = null;
         this.db = null;
         this.theme = null;
 
@@ -321,7 +334,7 @@ class PageController {
         await this.loadTask();
         this.history.log('loaded task');
         this.addEventListeners();
-        this.hideEditorShowOverview();
+        this.hideEditorShowOverview({ shouldHistoryLog: false });
         // await this.replayExampleHistoryFile();
     }
 
@@ -470,6 +483,9 @@ class PageController {
             if (event.code === 'ArrowRight') {
                 this.moveRight();
             }
+            if (event.code === 'KeyT') {
+                this.showToolPanel();
+            }
             // Experiments with replaying the recorded history
             if (event.code === 'KeyQ') {
                 this.replay();
@@ -494,14 +510,24 @@ class PageController {
 
         let drawingItem = this.currentDrawingItem();
         let historyImageHandle = drawingItem.getHistoryImageHandle();
+        let { minX, maxX, minY, maxY } = drawingItem.getSelectedRectangleCoordinates();
 
         let message = `change tool to ${toolId}`;
-        this.history.log(message, {
+        var context = {
             action: 'pick tool',
             toolId: toolId,
             modified: 'none',
             imageHandle: historyImageHandle,
-        });
+        };
+        if (toolId === 'select') {
+            let selectWidth = maxX - minX + 1;
+            let selectHeight = maxY - minY + 1;
+            context.selectX = minX;
+            context.selectY = minY;
+            context.selectWidth = selectWidth;
+            context.selectHeight = selectHeight;
+        }
+        this.history.log(message, context);
     }
 
     undoAction() {
@@ -680,7 +706,7 @@ class PageController {
             return;
         }
         if(this.currentTool == 'draw') {
-            this.setPixel(cellx, celly, this.currentColor);
+            this.drawPixel(cellx, celly, this.currentColor);
         }
         if(this.currentTool == 'fill') {
             this.floodFill(cellx, celly, this.currentColor);
@@ -726,11 +752,7 @@ class PageController {
         let celly = Math.floor((position.y-y0)/cellSize);
         // console.log('cellx', cellx, 'celly', celly);
         if(this.currentTool == 'select') {
-            let clampedCellX = Math.max(0, Math.min(cellx, originalImage.width - 1));
-            let clampedCellY = Math.max(0, Math.min(celly, originalImage.height - 1));
-            drawingItem.selectRectangle.x1 = clampedCellX;
-            drawingItem.selectRectangle.y1 = clampedCellY;
-            this.updateDrawCanvas();
+            this.createSelectionUpdate(cellx, celly);
             return;
         }
 
@@ -741,17 +763,17 @@ class PageController {
             return;
         }
         if(this.currentTool == 'draw') {
-            this.setPixel(cellx, celly, this.currentColor);
+            this.drawPixel(cellx, celly, this.currentColor);
         }
     }
 
     stopDraw(event) {
         event.preventDefault();
         this.isDrawing = false;
-        // var ctx = this.drawCanvas.getContext('2d');
-        // let cellSize = 100;
-        // ctx.fillStyle = 'white';
-        // ctx.fillRect(0, 0, cellSize, cellSize);
+
+        if(this.currentTool == 'draw') {
+            this.finishDrawInteractionState();
+        }
     }
 
     createSelectionBegin(unclampedX, unclampedY) {
@@ -773,10 +795,79 @@ class PageController {
             modified: 'selection',
             x: x,
             y: y,
+            selectX: x,
+            selectY: y,
+            selectWidth: 1,
+            selectHeight: 1,
         });
     }
 
-    setPixel(x, y, color) {
+    createSelectionUpdate(unclampedX, unclampedY) {
+        let drawingItem = this.currentDrawingItem();
+        let historyImageHandle = drawingItem.getHistoryImageHandle();
+        let originalImage = drawingItem.originator.getImageRef();
+
+        let x = Math.max(0, Math.min(unclampedX, originalImage.width - 1));
+        let y = Math.max(0, Math.min(unclampedY, originalImage.height - 1));
+        let isSame = drawingItem.selectRectangle.x1 === x && drawingItem.selectRectangle.y1 === y;
+        if (isSame) {
+            // console.log('The selection is the same after createSelectionUpdate.');
+            return;
+        }
+        drawingItem.selectRectangle.x1 = x;
+        drawingItem.selectRectangle.y1 = y;
+        this.updateDrawCanvas();
+
+        let { minX, maxX, minY, maxY } = drawingItem.getSelectedRectangleCoordinates();
+        let selectWidth = maxX - minX + 1;
+        let selectHeight = maxY - minY + 1;
+
+        let message = `create selection update x: ${x} y: ${y}, modified selection`;
+        this.history.log(message, {
+            action: 'create selection update',
+            imageHandle: historyImageHandle,
+            modified: 'selection',
+            x: x,
+            y: y,
+            selectX: minX,
+            selectY: minY,
+            selectWidth: selectWidth,
+            selectHeight: selectHeight,
+        });
+    }
+
+    finishDrawInteractionState() {
+        if (!this.drawInteractionState) {
+            return;
+        }
+        // console.log(`key ${this.drawInteractionState.key} registerCount: ${this.drawInteractionState.registerCount}`);
+        this.drawInteractionState = null;
+    }
+
+    prepareDrawInteractionState(x, y, color) {
+        let key = `x${x}y${y}c${color}`;
+        if (!this.drawInteractionState) {
+            this.drawInteractionState = new DrawInteractionState(key);
+            return;
+        }
+        if(this.drawInteractionState.key != key) {
+            this.finishDrawInteractionState();
+            this.drawInteractionState = new DrawInteractionState(key);
+            return;
+        }
+    }
+
+    drawPixel(x, y, color) {
+        this.prepareDrawInteractionState(x, y, color);
+        this.drawInteractionState.register();
+        if (this.drawInteractionState.registerCount > 1) {
+            // The gesture recognizer fires many times per second. 60 times per second I guess.
+            // When interacting with a single pixel, it may fire several times.
+            // This code prevents flooding the history with duplicate entries.
+            // console.log('drawPixel is called more than once for the same pixel');
+            return;
+        }
+
         let drawingItem = this.currentDrawingItem();
         let historyImageHandle = drawingItem.getHistoryImageHandle();
         let originalImage = drawingItem.originator.getImageClone();
@@ -789,9 +880,9 @@ class PageController {
         }
         if (image.isEqualTo(originalImage)) {
             // console.log('The image is the same after setPixel.');
-            let message = `set pixel x: ${x} y: ${y} color: ${color}, no change to image`;
+            let message = `draw x: ${x} y: ${y} color: ${color}, no change to image`;
             this.history.log(message, {
-                action: 'set pixel',
+                action: 'draw',
                 imageHandle: historyImageHandle,
                 modified: 'none',
                 x: x,
@@ -801,13 +892,13 @@ class PageController {
             });
             return;
         }
-        drawingItem.caretaker.saveState(drawingItem.originator, 'set pixel');
+        drawingItem.caretaker.saveState(drawingItem.originator, 'draw');
         drawingItem.originator.setImage(image);
         this.updateDrawCanvas();
 
-        let message = `set pixel x: ${x} y: ${y} color: ${color}, modified image`;
+        let message = `draw x: ${x} y: ${y} color: ${color}, modified image`;
         this.history.log(message, {
-            action: 'set pixel',
+            action: 'draw',
             imageHandle: historyImageHandle,
             modified: 'image',
             x: x,
@@ -908,10 +999,10 @@ class PageController {
         if (minY < 0 || maxY >= originalImage.height) {
             return;
         }
-        let selectionX = minX;
-        let selectionY = minY;
-        let selectionWidth = maxX - minX + 1;
-        let selectionHeight = maxY - minY + 1;
+        let selectX = minX;
+        let selectY = minY;
+        let selectWidth = maxX - minX + 1;
+        let selectHeight = maxY - minY + 1;
         let color = this.currentColor;
         var image = originalImage.clone();
         for (let y = minY; y <= maxY; y++) {
@@ -922,15 +1013,15 @@ class PageController {
         if (image.isEqualTo(originalImage)) {
             console.log('The image is the same after filling the selection.');
 
-            let message = `fill selection x: ${selectionX} y: ${selectionY} width: ${selectionWidth} height: ${selectionHeight} color: ${color}, no change to image`;
+            let message = `fill selection x: ${selectX} y: ${selectY} width: ${selectWidth} height: ${selectHeight} color: ${color}, no change to image`;
             this.history.log(message, {
                 action: 'fill selection',
                 imageHandle: historyImageHandle,
                 modified: 'none',
-                x: selectionX,
-                y: selectionY,
-                width: selectionWidth,
-                height: selectionHeight,
+                x: selectX,
+                y: selectY,
+                width: selectWidth,
+                height: selectHeight,
                 color: color,
                 image: image.pixels,
             });
@@ -940,15 +1031,15 @@ class PageController {
         drawingItem.originator.setImage(image);
         this.updateDrawCanvas();
 
-        let message = `fill selection x: ${selectionX} y: ${selectionY} width: ${selectionWidth} height: ${selectionHeight} color: ${color}, modified image`;
+        let message = `fill selection x: ${selectX} y: ${selectY} width: ${selectWidth} height: ${selectHeight} color: ${color}, modified image`;
         this.history.log(message, {
             action: 'fill selection',
             imageHandle: historyImageHandle,
             modified: 'image',
-            x: selectionX,
-            y: selectionY,
-            width: selectionWidth,
-            height: selectionHeight,
+            x: selectX,
+            y: selectY,
+            width: selectWidth,
+            height: selectHeight,
             color: color,
             image: image.pixels,
         });
@@ -1425,7 +1516,10 @@ class PageController {
         this.updateDrawCanvas();
     }
 
-    hideEditorShowOverview() {
+    hideEditorShowOverview(options = {}) {
+        let drawingItem = this.currentDrawingItem();
+        let historyImageHandle = drawingItem.getHistoryImageHandle();
+
         let el0 = document.getElementById("task-overview");
         let el1 = document.getElementById("page-footer-overview-mode");
         let el2 = document.getElementById("draw-area-outer");
@@ -1436,6 +1530,20 @@ class PageController {
         el3.classList.add('hidden');
 
         this.updateOverview();
+
+        var shouldHistoryLog = true;
+        if (options.hasOwnProperty('shouldHistoryLog')) {
+            shouldHistoryLog = options.shouldHistoryLog;
+        }
+
+        if (shouldHistoryLog) {
+            let message = 'hide editor show overview';
+            this.history.log(message, {
+                action: 'hide editor show overview',
+                imageHandle: historyImageHandle,
+                modified: 'none',
+            });
+        }
     }
 
     toggleFullscreen() {
@@ -1837,8 +1945,8 @@ class PageController {
         let clampedY0 = Math.max(0, Math.min(pasteMinY, image2.height - 1));
         let clampedX1 = Math.max(0, Math.min(pasteMinX + pasteWidth - 1, image2.width - 1));
         let clampedY1 = Math.max(0, Math.min(pasteMinY + pasteHeight - 1, image2.height - 1));
-        let selectionWidth = clampedX1 - clampedX0 + 1;
-        let selectionHeight = clampedY1 - clampedY0 + 1;
+        let selectWidth = clampedX1 - clampedX0 + 1;
+        let selectHeight = clampedY1 - clampedY0 + 1;
         drawingItem.selectRectangle.x0 = clampedX0;
         drawingItem.selectRectangle.y0 = clampedY0;
         drawingItem.selectRectangle.x1 = clampedX1;
@@ -1859,10 +1967,10 @@ class PageController {
             pasteY: pasteMinY,
             pasteWidth: pasteWidth,
             pasteHeight: pasteHeight,
-            selectionX: clampedX0,
-            selectionY: clampedY0,
-            selectionWidth: selectionWidth,
-            selectionHeight: selectionHeight,
+            selectX: clampedX0,
+            selectY: clampedY0,
+            selectWidth: selectWidth,
+            selectHeight: selectHeight,
             image: image2.pixels,
         });
     }
@@ -2362,16 +2470,35 @@ class PageController {
         });
     }
 
+    isToolPanelHidden() {
+        let el = document.getElementById("tool-panel");
+        return el.classList.contains('hidden');
+    }
+
     showToolPanel() {
+        let drawingItem = this.currentDrawingItem();
+        let historyImageHandle = drawingItem.getHistoryImageHandle();
+        let originalImage = drawingItem.originator.getImageRef();
+
         {
-            let originalImage = this.currentDrawingItem().originator.getImageRef();
             var el = document.getElementById('canvas-size-input');
             el.value = `${originalImage.width}x${originalImage.height}`;
+        }
+        if (!this.isToolPanelHidden()) {
+            // Already visible. No need to show it again.
+            return;
         }
         {
             var el = document.getElementById('tool-panel');
             el.classList.remove('hidden');
         }
+
+        let message = 'show tool panel';
+        this.history.log(message, {
+            action: 'show tool panel',
+            imageHandle: historyImageHandle,
+            modified: 'none',
+        });
     }
 
     hideToolPanel() {
@@ -2532,7 +2659,7 @@ class PageController {
 
         // Date/time formatting
         // utcTimestampWithSubsecond: "1984-12-24T23:59:59.987Z"
-        let utcTimestampWithSubsecond = new Date().toISOString();
+        let utcTimestampWithSubsecond = this.history.startTime.toISOString();
         // utcTimestampWithoutSubsecond: "1984-12-24T23:59:59Z"
         let utcTimestampWithoutSubsecond = utcTimestampWithSubsecond.split('.')[0] + 'Z';
         // utcTimestampWithoutColon: "1984-12-24T23-59-59Z"
@@ -2546,7 +2673,7 @@ class PageController {
         };
 
         var dict = {
-            "timestamp": utcTimestampWithoutSubsecond,
+            "startTime": utcTimestampWithoutSubsecond,
             "user": user,
             "dataset": this.datasetId, 
             "task": this.taskId,
