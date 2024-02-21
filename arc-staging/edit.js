@@ -173,30 +173,35 @@ class DrawingItem {
 }
 
 class HistoryItem {
-    constructor(id, date) {
+    constructor(id, wait) {
         // The `id` is a non-negative integer that gets incremented for each new history item.
         this.id = id;
 
-        // The `date` is a Date object that represents the time when the history item was created.
-        this.date = date;
-    }
-
-    static create() {
-        let id = 0;
-        let instance = new HistoryItem(id, new Date());
-        return instance;
+        // The `wait` is the number of milliseconds since previous history item. It's a non-negative integer.
+        this.wait = wait;
     }
 }
 
 class HistoryContainer {
     constructor() {
         this.items = [];
+        this.lastEventTime = null; // Tracks the time of the last event.
     }
 
     log(message, context = null) {
-        let count = this.items.length;
-        let item = HistoryItem.create();
-        item.id = count;
+        const now = new Date();
+        let msSinceLastEvent = 0;
+
+        // Calculate the time difference if there is a last event time recorded
+        if (this.lastEventTime !== null) {
+            msSinceLastEvent = now.getTime() - this.lastEventTime.getTime();
+        }
+
+        // Update the last event time to now
+        this.lastEventTime = now;
+
+        // Create a new HistoryItem with the ID as the current length of items and the calculated msSinceLastEvent
+        let item = new HistoryItem(this.items.length, msSinceLastEvent);
         item.message = message;
         if (context) {
             item.context = context;
@@ -276,7 +281,7 @@ class PageController {
         this.isDrawing = false;
         this.currentColor = 0;
         this.currentTest = 0;
-        this.currentTool = 'paint';
+        this.currentTool = 'draw';
         this.numberOfTests = 1;
         this.drawingItems = [];
         this.inset = 2;
@@ -288,6 +293,8 @@ class PageController {
 
         this.enablePlotDraw = false;
 
+        this.statsRevealCount = 0;
+
         let maxPixelSize = 100;
         this.maxPixelSize = maxPixelSize;
         this.image = ARCImage.color(maxPixelSize, maxPixelSize, 0);
@@ -298,10 +305,10 @@ class PageController {
         this.overviewRevealSolutions = false;
 
         {
-            // Select the radio button with the id 'tool_paint'
+            // Select the radio button with the id 'tool_draw'
             // Sometimes the browser remembers the last selected radio button, across sessions.
-            // This code makes sure that the 'tool_paint' radio button is always selected on launch.
-            document.getElementById('tool_paint').checked = true;
+            // This code makes sure that the 'tool_draw' radio button is always selected on launch.
+            document.getElementById('tool_draw').checked = true;
         }
     }
 
@@ -333,22 +340,22 @@ class PageController {
         window.addEventListener('orientationchange', () => { this.resizeOrChangeOrientation(); });
 
         // Interaction with the draw canvas
-        this.drawCanvas.addEventListener('touchstart', (event) => { this.startDraw(event); }, false);
-        this.drawCanvas.addEventListener('touchmove', (event) => { this.moveDraw(event); }, false);
-        this.drawCanvas.addEventListener('touchend', (event) => { this.stopDraw(event); }, false);
-        this.drawCanvas.addEventListener('mousedown', (event) => { this.startDraw(event); }, false);
-        this.drawCanvas.addEventListener('mousemove', (event) => { this.moveDraw(event); }, false);
-        this.drawCanvas.addEventListener('mouseup', (event) => { this.stopDraw(event); }, false);
-        this.drawCanvas.addEventListener('mouseout', (event) => { this.stopDraw(event); }, false);
+        this.drawCanvas.addEventListener('touchstart', (event) => { this.startDraw(event); });
+        this.drawCanvas.addEventListener('touchmove', (event) => { this.moveDraw(event); });
+        this.drawCanvas.addEventListener('touchend', (event) => { this.stopDraw(event); });
+        this.drawCanvas.addEventListener('mousedown', (event) => { this.startDraw(event); });
+        this.drawCanvas.addEventListener('mousemove', (event) => { this.moveDraw(event); });
+        this.drawCanvas.addEventListener('mouseup', (event) => { this.stopDraw(event); });
+        this.drawCanvas.addEventListener('mouseout', (event) => { this.stopDraw(event); });
 
         // Interaction with the paste canvas
-        this.pasteCanvas.addEventListener('touchstart', (event) => { this.startPaste(event); }, false);
-        this.pasteCanvas.addEventListener('touchmove', (event) => { this.movePaste(event); }, false);
-        this.pasteCanvas.addEventListener('touchend', (event) => { this.stopPaste(event); }, false);
-        this.pasteCanvas.addEventListener('mousedown', (event) => { this.startPaste(event); }, false);
-        this.pasteCanvas.addEventListener('mousemove', (event) => { this.movePaste(event); }, false);
-        this.pasteCanvas.addEventListener('mouseup', (event) => { this.stopPaste(event); }, false);
-        this.pasteCanvas.addEventListener('mouseout', (event) => { this.stopPaste(event); }, false);
+        this.pasteCanvas.addEventListener('touchstart', (event) => { this.startPaste(event); });
+        this.pasteCanvas.addEventListener('touchmove', (event) => { this.movePaste(event); });
+        this.pasteCanvas.addEventListener('touchend', (event) => { this.stopPaste(event); });
+        this.pasteCanvas.addEventListener('mousedown', (event) => { this.startPaste(event); });
+        this.pasteCanvas.addEventListener('mousemove', (event) => { this.movePaste(event); });
+        this.pasteCanvas.addEventListener('mouseup', (event) => { this.stopPaste(event); });
+        this.pasteCanvas.addEventListener('mouseout', (event) => { this.stopPaste(event); });
 
         // Listen for the keyup event
         window.addEventListener('keyup', (event) => { this.keyUp(event); });
@@ -442,8 +449,8 @@ class PageController {
             if (event.code === 'KeyV') {
                 this.pasteFromClipboard();
             }
-            if (event.code === 'KeyP') {
-                this.keyboardShortcutPickTool('tool_paint');
+            if (event.code === 'KeyD') {
+                this.keyboardShortcutPickTool('tool_draw');
             }
             if (event.code === 'KeyS') {
                 this.keyboardShortcutPickTool('tool_select');
@@ -463,6 +470,7 @@ class PageController {
             if (event.code === 'ArrowRight') {
                 this.moveRight();
             }
+            // Experiments with replaying the recorded history
             if (event.code === 'KeyQ') {
                 this.replay();
             }
@@ -483,10 +491,21 @@ class PageController {
         } else {
             el1.classList.add('hidden');
         }
+
+        let drawingItem = this.currentDrawingItem();
+        let historyImageHandle = drawingItem.getHistoryImageHandle();
+
+        let message = `change tool to ${toolId}`;
+        this.history.log(message, {
+            action: 'pick tool',
+            toolId: toolId,
+            modified: 'none',
+            imageHandle: historyImageHandle,
+        });
     }
 
     undoAction() {
-        console.log('Undo action');
+        // console.log('Undo action');
         let drawingItem = this.currentDrawingItem();
 
         if (!drawingItem.caretaker.canUndo()) {
@@ -512,7 +531,7 @@ class PageController {
     }
 
     redoAction() {
-        console.log('Redo action');
+        // console.log('Redo action');
         let drawingItem = this.currentDrawingItem();
 
         if (!drawingItem.caretaker.canRedo()) {
@@ -650,13 +669,7 @@ class PageController {
         // console.log('cellx', cellx, 'celly', celly);
 
         if(this.currentTool == 'select') {
-            let clampedCellX = Math.max(0, Math.min(cellx, originalImage.width - 1));
-            let clampedCellY = Math.max(0, Math.min(celly, originalImage.height - 1));
-            drawingItem.selectRectangle.x0 = clampedCellX;
-            drawingItem.selectRectangle.y0 = clampedCellY;
-            drawingItem.selectRectangle.x1 = clampedCellX;
-            drawingItem.selectRectangle.y1 = clampedCellY;
-            this.updateDrawCanvas();
+            this.createSelectionBegin(cellx, celly);
             return;
         }
 
@@ -666,7 +679,7 @@ class PageController {
         if (celly < 0 || celly >= originalImage.height) {
             return;
         }
-        if(this.currentTool == 'paint') {
+        if(this.currentTool == 'draw') {
             this.setPixel(cellx, celly, this.currentColor);
         }
         if(this.currentTool == 'fill') {
@@ -727,7 +740,7 @@ class PageController {
         if (celly < 0 || celly >= originalImage.height) {
             return;
         }
-        if(this.currentTool == 'paint') {
+        if(this.currentTool == 'draw') {
             this.setPixel(cellx, celly, this.currentColor);
         }
     }
@@ -739,6 +752,28 @@ class PageController {
         // let cellSize = 100;
         // ctx.fillStyle = 'white';
         // ctx.fillRect(0, 0, cellSize, cellSize);
+    }
+
+    createSelectionBegin(unclampedX, unclampedY) {
+        let drawingItem = this.currentDrawingItem();
+        let historyImageHandle = drawingItem.getHistoryImageHandle();
+        let originalImage = drawingItem.originator.getImageRef();
+        let x = Math.max(0, Math.min(unclampedX, originalImage.width - 1));
+        let y = Math.max(0, Math.min(unclampedY, originalImage.height - 1));
+        drawingItem.selectRectangle.x0 = x;
+        drawingItem.selectRectangle.y0 = y;
+        drawingItem.selectRectangle.x1 = x;
+        drawingItem.selectRectangle.y1 = y;
+        this.updateDrawCanvas();
+
+        let message = `create selection begin x: ${x} y: ${y}, modified selection`;
+        this.history.log(message, {
+            action: 'create selection begin',
+            imageHandle: historyImageHandle,
+            modified: 'selection',
+            x: x,
+            y: y,
+        });
     }
 
     setPixel(x, y, color) {
@@ -1035,16 +1070,28 @@ class PageController {
         return cellSize;
     }
 
-    // The user is pressing down the button that reveals the solutions.
+    // The user is pressing down the button that reveals the solutions. By default the solutions are hidden.
     overviewRevealSolutionsYes() {
         this.overviewRevealSolutions = true;
         this.updateOverview();
+
+        this.statsRevealCount++;
+
+        let message = 'reveal begin';
+        this.history.log(message, {
+            modified: 'none',
+        });
     }
 
-    // The user is releasing the button that reveals the solutions.
+    // The user is releasing the button that reveals the solutions. So the solutions are hidden again.
     overviewRevealSolutionsNo() {
         this.overviewRevealSolutions = false;
         this.updateOverview();
+
+        let message = 'reveal end';
+        this.history.log(message, {
+            modified: 'none',
+        });
     }
 
     // Rebuild the overview table, so it shows what the user has drawn so far.
@@ -1416,6 +1463,10 @@ class PageController {
 
     static getItemIsGridVisible() {
         let rawValue = localStorage.getItem(PageController.gridKey());
+        if (rawValue === null) {
+            // For new users, show the grid by default
+            return true;
+        }
         return rawValue == 'true';
     }
 
@@ -2491,6 +2542,7 @@ class PageController {
 
         let summary = {
             "history count": this.history.items.length,
+            "reveal count": this.statsRevealCount,
         };
 
         var dict = {
