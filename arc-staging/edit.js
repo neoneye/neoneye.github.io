@@ -307,6 +307,7 @@ class PageController {
         this.enablePlotDraw = false;
 
         this.statsRevealCount = 0;
+        this.statsStartOverCount = 0;
 
         let maxPixelSize = 100;
         this.maxPixelSize = maxPixelSize;
@@ -316,6 +317,9 @@ class PageController {
         this.isGridVisible = PageController.getItemIsGridVisible();
 
         this.overviewRevealSolutions = false;
+
+        this.isUploadDownloadHistoryButtonsVisible = Settings.getAdvancedModeEnabled();
+        this.isReplayUndoListButtonVisible = Settings.getAdvancedModeEnabled();
 
         {
             // Select the radio button with the id 'tool_draw'
@@ -336,6 +340,22 @@ class PageController {
         this.addEventListeners();
         this.hideEditorShowOverview({ shouldHistoryLog: false });
         // await this.replayExampleHistoryFile();
+
+        if (this.isUploadDownloadHistoryButtonsVisible) {
+            {
+                var el = document.getElementById('download-history-button');
+                el.classList.remove('hidden');
+            }
+            {
+                var el = document.getElementById('upload-history-button');
+                el.classList.remove('hidden');
+            }
+        }
+
+        if (this.isReplayUndoListButtonVisible) {
+            var el = document.getElementById('replay-undolist-button');
+            el.classList.remove('hidden');
+        }
     }
 
     async replayExampleHistoryFile() {
@@ -483,12 +503,20 @@ class PageController {
             if (event.code === 'ArrowRight') {
                 this.moveRight();
             }
+            if (event.code === 'KeyX') {
+                this.flipX();
+            }
+            if (event.code === 'KeyY') {
+                this.flipY();
+            }
             if (event.code === 'KeyT') {
                 this.showToolPanel();
             }
             // Experiments with replaying the recorded history
-            if (event.code === 'KeyQ') {
-                this.replay();
+            if (this.isReplayUndoListButtonVisible) {
+                if (event.code === 'KeyQ') {
+                    this.replayUndoList();
+                }
             }
         }
     }
@@ -1760,6 +1788,8 @@ class PageController {
         this.updateDrawCanvas();
         this.hideToolPanel();
 
+        this.statsStartOverCount++;
+
         let message = `start over, modified image`;
         this.history.log(message, {
             action: 'start over',
@@ -2518,7 +2548,7 @@ class PageController {
         }
     }
 
-    replay() {
+    replayUndoList() {
         console.log('Replay start');
         let drawingItem = this.currentDrawingItem();
         // drawingItem.caretaker.printHistory();
@@ -2580,17 +2610,8 @@ class PageController {
         replayStep(); // Start the replay loop
     }
 
-    replay2(history_items) {
+    replayHistoryItems(history_items) {
         console.log('Replay start');
-        // let drawingItem = this.currentDrawingItem();
-        // drawingItem.caretaker.printHistory();
-
-        // History of all actions including the current state
-        // let undoListRef = drawingItem.caretaker.undoList;
-        // let undoList = Array.from(undoListRef);
-        // let actionName = 'replay';
-        // let currentState = drawingItem.originator.saveStateToMemento(actionName);
-        // undoList.push(currentState);
 
         let index = 0; // Start from the first item in the undo list
     
@@ -2654,7 +2675,7 @@ class PageController {
         this.updateDrawCanvas();
     }
 
-    downloadReplayFile() {
+    downloadHistoryFile() {
         let user = 'anonymous';
 
         // Date/time formatting
@@ -2670,6 +2691,7 @@ class PageController {
         let summary = {
             "history count": this.history.items.length,
             "reveal count": this.statsRevealCount,
+            "start over count": this.statsStartOverCount,
         };
 
         var dict = {
@@ -2706,7 +2728,7 @@ class PageController {
         URL.revokeObjectURL(url);
     }
 
-    clickUploadReplayFile() {
+    clickUploadHistoryFile() {
         document.getElementById('file-input').click(); // Programmatically click the hidden file input
     }
 
@@ -2756,7 +2778,7 @@ class PageController {
             history_items2.push(history_item2);
         }
         const callback = () => {
-            this.replay2(history_items2);
+            this.replayHistoryItems(history_items2);
         };
         setTimeout(callback, 100);
     }
