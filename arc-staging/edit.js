@@ -142,6 +142,9 @@ class DrawingItem {
             x1: 0,
             y1: 0,
         };
+        this.submitCorrectCount = 0;
+        this.submitIncorrectCount = 0;
+        this.startOverCount = 0;
     }
 
     getSelectedRectangleCoordinates() {
@@ -307,7 +310,7 @@ class PageController {
         this.enablePlotDraw = false;
 
         this.statsRevealCount = 0;
-        this.statsStartOverCount = 0;
+        this.statsShowOverviewCount = 0;
 
         let maxPixelSize = 100;
         this.maxPixelSize = maxPixelSize;
@@ -318,9 +321,8 @@ class PageController {
 
         this.overviewRevealSolutions = false;
 
-        let experimentalReplayEnabled = true;
-        this.isUploadDownloadHistoryButtonsVisible = experimentalReplayEnabled && Settings.getAdvancedModeEnabled();
-        this.isReplayUndoListButtonVisible = experimentalReplayEnabled && Settings.getAdvancedModeEnabled();
+        this.isUploadDownloadHistoryButtonsVisible = Settings.getAdvancedModeEnabled();
+        this.isReplayUndoListButtonVisible = Settings.getAdvancedModeEnabled();
 
         {
             // Select the radio button with the id 'tool_draw'
@@ -513,9 +515,8 @@ class PageController {
             if (event.code === 'KeyT') {
                 this.showToolPanel();
             }
-            // Experiments with replaying the recorded history
             if (this.isReplayUndoListButtonVisible) {
-                if (event.code === 'KeyQ') {
+                if (event.code === 'KeyP') {
                     this.replayUndoList();
                 }
             }
@@ -1535,6 +1536,9 @@ class PageController {
 
         this.updateOverview();
 
+        this.statsShowOverviewCount++;
+        // console.log('statsShowOverviewCount:', this.statsShowOverviewCount);
+
         var shouldHistoryLog = true;
         if (options.hasOwnProperty('shouldHistoryLog')) {
             shouldHistoryLog = options.shouldHistoryLog;
@@ -1602,22 +1606,22 @@ class PageController {
         let isCorrect = json0 == json1;
 
         if (isCorrect) {
-            let message = `submit, correct`;
-            this.history.log(message, {
-                action: 'submit',
-                imageHandle: historyImageHandle,
-                correct: true,
-                image: image.pixels,
-            });
+            drawingItem.submitCorrectCount++;
         } else {
-            let message = `submit, incorrect`;
-            this.history.log(message, {
-                action: 'submit',
-                imageHandle: historyImageHandle,
-                correct: false,
-                image: image.pixels,
-            });
+            drawingItem.submitIncorrectCount++;
         }
+
+        let message = isCorrect ? 'submit, correct' : 'submit, incorrect';
+        this.history.log(message, {
+            action: 'submit',
+            imageHandle: historyImageHandle,
+            correct: isCorrect,
+            submitCorrectCount: drawingItem.submitCorrectCount,
+            submitIncorrectCount: drawingItem.submitIncorrectCount,
+            startOverCount: drawingItem.startOverCount,
+            showOverviewCount: this.statsShowOverviewCount,
+            image: image.pixels,
+        });
 
         var el = null;
         if (isCorrect) {
@@ -1761,13 +1765,14 @@ class PageController {
         this.updateDrawCanvas();
         this.hideToolPanel();
 
-        this.statsStartOverCount++;
+        drawingItem.startOverCount++;
 
         let message = 'start over';
         this.history.log(message, {
             action: 'start over',
             imageHandle: historyImageHandle,
             sameImage: false,
+            startOverCount: drawingItem.startOverCount,
             image: inputImage.pixels,
         });
     }
@@ -2452,13 +2457,15 @@ class PageController {
 
     replayUndoList() {
         console.log('Replay start');
+        this.hideToolPanel();
+
         let drawingItem = this.currentDrawingItem();
         // drawingItem.caretaker.printHistory();
 
         // History of all actions including the current state
         let undoListRef = drawingItem.caretaker.undoList;
         let undoList = Array.from(undoListRef);
-        let actionName = 'replay';
+        let actionName = 'the end';
         let currentState = drawingItem.originator.saveStateToMemento(actionName);
         undoList.push(currentState);
 
@@ -2610,13 +2617,36 @@ class PageController {
 
         let historyJSON = this.history.toJSON();
 
+        // Count the number of test pairs that are solved/unsolved
+        var testSolvedCount = 0;
+        var testUnsolvedCount = 0;
+        for (let i = 0; i < this.drawingItems.length; i++) {
+            let drawingItem = this.drawingItems[i];
+            if (drawingItem.submitCorrectCount > 0) {
+                testSolvedCount++;
+            } else {
+                testUnsolvedCount++;
+            }
+        }
+
+        // Number of times the user started over
+        var sumStartOverCount = 0;
+        for (let i = 0; i < this.drawingItems.length; i++) {
+            let drawingItem = this.drawingItems[i];
+            sumStartOverCount += drawingItem.startOverCount;
+        }
+
         let summary = {
             "history count": this.history.items.length,
             "reveal count": this.statsRevealCount,
-            "start over count": this.statsStartOverCount,
+            "start over count": sumStartOverCount,
+            "test solved count": testSolvedCount,
+            "test unsolved count": testUnsolvedCount,
+            "show overview count": this.statsShowOverviewCount,
         };
 
         var dict = {
+            "fileType": "ARC-Interactive, history file, version 0.1.0",
             "startTime": utcTimestampWithoutSubsecond,
             "user": user,
             "dataset": this.datasetId, 
