@@ -244,6 +244,7 @@ class PageController {
         this.theme = null;
         this.taskId = null;
         this.datasetId = null;
+        this.currentHistoryJsonString = null;
 
         // Create URLSearchParams object
         let urlParams = new URLSearchParams(window.location.search);
@@ -306,7 +307,6 @@ class PageController {
 
         this.overviewRevealSolutions = false;
 
-        this.isUploadDownloadHistoryButtonsVisible = Settings.getAdvancedModeEnabled();
         this.isReplayUndoListButtonVisible = true;
 
         {
@@ -326,17 +326,6 @@ class PageController {
         this.history.log('welcome to overview');
         this.addEventListeners();
         await this.replayExampleHistoryFile2();
-
-        if (this.isUploadDownloadHistoryButtonsVisible) {
-            {
-                var el = document.getElementById('download-history-button');
-                el.classList.remove('hidden');
-            }
-            {
-                var el = document.getElementById('upload-history-button');
-                el.classList.remove('hidden');
-            }
-        }
 
         if (this.isReplayUndoListButtonVisible) {
             var el = document.getElementById('replay-undolist-button');
@@ -367,6 +356,8 @@ class PageController {
         let uint8Array = new Uint8Array(arrayBuffer);
         let jsonString = new TextDecoder().decode(uint8Array);
 
+        this.currentHistoryJsonString = jsonString;
+
         let obj = JSON.parse(jsonString);
         if (obj.dataset) {
             this.datasetId = obj.dataset;
@@ -381,6 +372,15 @@ class PageController {
         this.hideEditorShowOverview({ shouldHistoryLog: false });
 
         this.replayHistoryFile2(jsonString);
+    }
+
+    playAction() {
+        console.log('playAction');
+        if (!this.currentHistoryJsonString) {
+            console.error('currentHistoryJsonString is not set');
+            return;
+        }
+        this.replayHistoryFile2(this.currentHistoryJsonString);
     }
 
     addEventListeners() {
@@ -483,8 +483,8 @@ class PageController {
         if (event.code === 'KeyG') {
             this.toggleGrid();
         }
-        if (event.code === 'KeyO') {
-            this.toggleOverview();
+        if (event.code === 'Space') {
+            this.playAction();
         }
 
         if (this.isEditorShownAndPasteModeFalse()) {
@@ -1294,7 +1294,8 @@ class PageController {
                 el_td1.classList.add('active-test');
                 el_td2.classList.add('active-test');
                 let handler = () => {
-                    this.hideOverviewShowEditor();
+                    console.log('Clicked on active test');
+                    // this.hideOverviewShowEditor();
                 };
                 el_td0.onpointerdown = handler;
                 el_td1.onpointerdown = handler;
