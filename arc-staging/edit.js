@@ -1553,8 +1553,10 @@ class PageController {
 
     postHistoryFile(filename, jsonString) {
         console.log(`Post history file to the server, updateUuid: ${this.updateUuid}`);
+        const url = 'https://braingridgame.com/api/history_guest';
+        // const url = 'http://localhost:8000/api/history_guest';
         fetch(
-            'https://braingridgame.com/test_guest_hello', {
+            url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
