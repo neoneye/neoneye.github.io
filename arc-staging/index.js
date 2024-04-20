@@ -461,14 +461,26 @@ class PageController {
             if (historyTasks) {
                 let historyTaskPathArray = historyTasks[task.taskId];
                 if (historyTaskPathArray) {
-                    let historyTaskPath = historyTaskPathArray[0];
-                    let baseUrl = 'https://raw.githubusercontent.com/neoneye/ARC-Interactive-History-Dataset/main/history_files/';
-                    let historyUrl = baseUrl + historyTaskPath;
-                    let historyTask = encodeURIComponent(historyUrl);
-                    el_a.setAttribute("data-tool-history", `history.html?historyUrl=${historyTask}`);
+                    var paths = [];
+                    // remove the .json suffix from all paths
+                    for (let j = 0; j < historyTaskPathArray.length; j++) {
+                        let pathWithoutSuffix = historyTaskPathArray[j].replace('.json', '');
+                        paths.push(pathWithoutSuffix);
+                    }
+                    let jsonString = JSON.stringify(paths);
+                    let jsonStringUrlEncoded = encodeURIComponent(jsonString);
+
+                    let encodedTaskId = encodeURIComponent(task.taskId);
+                    let encodedDatasetId = encodeURIComponent(task.datasetId);
+                    let historyUrl = 'history.html?' +
+                        'dataset=' + encodedDatasetId +
+                        '&task=' + encodedTaskId +
+                        'historyIndex=0&historyJson=' + 
+                        jsonStringUrlEncoded + 
+                        filterUrlParam;
+                    el_a.setAttribute("data-tool-history", historyUrl);
                 }
             }
-
 
             if (openInNewTab) {
                 el_a.target = "_blank";
