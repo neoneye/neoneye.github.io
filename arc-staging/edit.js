@@ -290,7 +290,8 @@ class PageController {
 
         this.overviewRevealSolutions = false;
 
-        this.isUploadDownloadHistoryButtonsVisible = Settings.getAdvancedModeEnabled();
+        this.overviewPageIndex = 0;
+
         this.isReplayUndoListButtonVisible = true;
 
         this.blockForStartDrawUntil = Date.now();
@@ -314,17 +315,6 @@ class PageController {
         this.addEventListeners();
         this.hideEditorShowOverview({ shouldHistoryLog: false });
         // await this.replayExampleHistoryFile();
-
-        if (this.isUploadDownloadHistoryButtonsVisible) {
-            {
-                var el = document.getElementById('download-history-button');
-                el.classList.remove('hidden');
-            }
-            {
-                var el = document.getElementById('upload-history-button');
-                el.classList.remove('hidden');
-            }
-        }
 
         if (this.isReplayUndoListButtonVisible) {
             var el = document.getElementById('replay-undolist-button');
@@ -1094,7 +1084,8 @@ class PageController {
         this.updateOverview();
     }
 
-    calcCellSizeForOverview(task, dpr, revealSolutions) {
+    calcCellSizeForOverview(task, dpr, revealSolutions, maxTrain) {
+        let n_train = Math.min(task.train.length, maxTrain);
         let el = document.getElementById('main-inner');
         let width = el.clientWidth;
         let height = el.clientHeight;
@@ -1107,7 +1098,7 @@ class PageController {
 
         let separatorSize = 1;
         var sumPixelWidth = 0;
-        for (let i = 0; i < task.train.length; i++) {
+        for (let i = 0; i < n_train; i++) {
             let input = task.train[i].input;
             let output = task.train[i].output;
             sumPixelWidth += Math.max(input.width, output.width);
@@ -1123,10 +1114,10 @@ class PageController {
             }
             sumPixelWidth += Math.max(input.width, output.width);
         }
-        sumPixelWidth += separatorSize * (task.train.length + task.test.length - 1);
+        sumPixelWidth += separatorSize * (n_train + task.test.length - 1);
 
         var maxPixelHeight = 0;
-        for (let i = 0; i < task.train.length; i++) {
+        for (let i = 0; i < n_train; i++) {
             let input = task.train[i].input;
             let output = task.train[i].output;
             let pixelHeight = input.height + output.height + separatorSize;
@@ -1179,8 +1170,31 @@ class PageController {
         // let devicePixelRatio = 1;
         // console.log('devicePixelRatio:', devicePixelRatio);
 
+        
         let task = this.task;
-        let cellSize = this.calcCellSizeForOverview(task, devicePixelRatio, this.overviewRevealSolutions);
+
+        let pageCapacity = Math.min(task.train.length, 4);
+        let pageCount = Math.floor((task.train.length - 1) / pageCapacity) + 1;
+        console.log('pageCount:', pageCount, 'pageCapacity:', pageCapacity, 'task.train.length:', task.train.length);
+        let lastPageIndex = pageCount - 1;
+        // Clamp the overviewPageIndex to a valid range.
+        if (this.overviewPageIndex < 0) {
+            this.overviewPageIndex = lastPageIndex;
+            // console.log('Negative overviewPageIndex. Go to last page. pageCapacity:', pageCapacity, 'task.train.length:', task.train.length, 'new page index:', this.overviewPageIndex);
+        } else if (this.overviewPageIndex > lastPageIndex) {
+            this.overviewPageIndex = 0;
+            // console.log('Too large overviewPageIndex. Go to first page. pageCapacity:', pageCapacity, 'task.train.length:', task.train.length, 'new page index:', this.overviewPageIndex);
+        }
+
+        // Show the current page index in the UI
+        let el_pagination_status = document.getElementById('pagination-status');
+        el_pagination_status.innerText = `Page ${this.overviewPageIndex + 1} of ${lastPageIndex + 1}`;
+
+        let train_offset = this.overviewPageIndex * pageCapacity;
+        let n_train = Math.min(task.train.length - train_offset, pageCapacity);
+        console.log('train_offset:', train_offset, 'n_train:', n_train, 'task.train.length:', task.train.length, 'pageCapacity:', pageCapacity, 'overviewPageIndex:', this.overviewPageIndex);
+
+        let cellSize = this.calcCellSizeForOverview(task, devicePixelRatio, this.overviewRevealSolutions, n_train);
         // console.log('cellSize:', cellSize);
         cellSize = cellSize / devicePixelRatio;
 
@@ -1192,9 +1206,9 @@ class PageController {
         el_tr1.innerText = '';
 
         // Populate table for `train` pairs.
-        for (let i = 0; i < task.train.length; i++) {
-            let input = task.train[i].input;
-            let output = task.train[i].output;
+        for (let i = 0; i < n_train; i++) {
+            let input = task.train[i + train_offset].input;
+            let output = task.train[i + train_offset].output;
             let el_td0 = document.createElement('td');
             let el_td1 = document.createElement('td');
             // el_td0.innerText = `Input ${i + 1}`;
@@ -2657,10 +2671,6 @@ class PageController {
         URL.revokeObjectURL(url);
     }
 
-    clickUploadHistoryFile() {
-        document.getElementById('file-input').click(); // Programmatically click the hidden file input
-    }
-
     changeInputFile(event) {
         var file = event.target.files[0];
         if (!file) {
@@ -2710,6 +2720,16 @@ class PageController {
             this.replayHistoryItems(history_items2);
         };
         setTimeout(callback, 100);
+    }
+
+    paginationGotoPreviousPage() {
+        this.overviewPageIndex -= 1;
+        this.updateOverview();
+    }
+
+    paginationGotoNextPage() {
+        this.overviewPageIndex += 1;
+        this.updateOverview();
     }
 }
 
