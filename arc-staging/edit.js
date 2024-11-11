@@ -213,6 +213,45 @@ class DrawInteractionState {
     }
 }
 
+class PaginationState {
+    constructor(pageIndex, pageCount, pageCapacity, trainOffset, trainCount) {
+        this.pageIndex = pageIndex;
+        this.pageCount = pageCount;
+        this.pageCapacity = pageCapacity;
+        this.trainOffset = trainOffset;
+        this.trainCount = trainCount;
+    }
+
+    clone() {
+        return new PaginationState(
+            this.pageIndex,
+            this.pageCount,
+            this.pageCapacity,
+            this.trainOffset,
+            this.trainCount
+        );
+    }
+
+    static createWithoutPagination(task) {
+        return new PaginationState(
+            0, // Start out on the first page
+            1, // There is only one page
+            task.train.length, // The page capacity is the number of train pairs
+            0, // The train offset is 0, since we don't want to skip any task.
+            task.train.length // The train count is the number of train pairs, since all train pairs are shown.
+        );
+    }
+
+    isEqualTo(other) {
+        if (!(other instanceof PaginationState)) {
+            throw new Error("PaginationState.isEqual() 'other' is not an instance of PaginationState");
+        }
+        let s0 = JSON.stringify(this);
+        let s1 = JSON.stringify(other);
+        return s0 === s1;
+    }
+}
+
 class PageController {
     constructor() {
         if (crypto.randomUUID) {
@@ -299,7 +338,8 @@ class PageController {
 
         this.overviewRevealSolutions = false;
 
-        this.overviewPageIndex = 0;
+        this.overviewPageIndexDelta = 0;
+        this.overviewPaginationState = null;
 
         this.isReplayUndoListButtonVisible = true;
 
@@ -1225,9 +1265,17 @@ class PageController {
         // Going below the following limit, and the thumbnails are nearly impossible to make sense of.
         let smallestMeaningfulCellSize = 3;
 
+        var firstTime = false;
+        if (!this.overviewPaginationState) {
+            this.overviewPaginationState = PaginationState.createWithoutPagination(task);
+            firstTime = true;
+        }
+        let lastPaginationState = this.overviewPaginationState.clone();
+
+        // Determine what the pagination state should be.
+        var pageIndex = lastPaginationState.pageIndex;
         var pageCapacity = task.train.length;
         var pageCount = 1;
-        var lastPageIndex = 1;
         var train_offset = 0;
         var n_train = task.train.length;
         var paginatedCellSize = 1;
@@ -1241,29 +1289,59 @@ class PageController {
                 console.log('maxExampleCount:', maxExampleCount);
             }
     
-            pageCapacity = Math.min(task.train.length, maxExampleCount);
-            pageCount = Math.floor((task.train.length - 1) / pageCapacity) + 1;
-            if (verbose) {
-                console.log('pageCount:', pageCount, 'pageCapacity:', pageCapacity, 'task.train.length:', task.train.length);
+            let pageCapacityLimit = Math.min(task.train.length, maxExampleCount);
+
+            // Determine how many pages are needed.
+            pageCount = Math.floor((task.train.length - 1) / pageCapacityLimit) + 1;
+
+            // Adjust the pageIndex based on the delta.
+            pageIndex = pageIndex + this.overviewPageIndexDelta;
+            if (pageIndex < 0) {
+                pageIndex = pageCount - 1;
+                if (verbose) {
+                    console.log('Negative overviewPageIndex. Go to last page. pageCapacity:', pageCapacity, 'task.train.length:', task.train.length, 'page index delta:', this.overviewPageIndexDelta);
+                }
+            } else if (pageIndex >= pageCount) {
+                pageIndex = 0;
+                if (verbose) {
+                    console.log('Too large overviewPageIndex. Go to first page. pageCapacity:', pageCapacity, 'task.train.length:', task.train.length, 'page index delta:', this.overviewPageIndexDelta);
+                }
             }
-            lastPageIndex = pageCount - 1;
-            // Clamp the overviewPageIndex to a valid range.
-            if (this.overviewPageIndex < 0) {
-                this.overviewPageIndex = lastPageIndex;
-                if (verbose) {
-                    console.log('Negative overviewPageIndex. Go to last page. pageCapacity:', pageCapacity, 'task.train.length:', task.train.length, 'new page index:', this.overviewPageIndex);
+
+            // Determine how many items are going to be shown per pages.
+            let minimumNumberOfItemsPerPage = Math.floor(task.train.length / pageCount);
+            let remainingNumberOfItems = task.train.length - minimumNumberOfItemsPerPage * pageCount;
+            if (verbose) {
+                console.log('minimumNumberOfItemsPerPage:', minimumNumberOfItemsPerPage, 'remainingNumberOfItems:', remainingNumberOfItems);
+            }
+
+            // For each page, determine the how many items are going to be shown.
+            var counters = [];
+            var train_offsets = [];
+            var current_train_offset = 0;
+            for (let i = 0; i < pageCount; i++) {
+                var count = minimumNumberOfItemsPerPage;
+                if (i < remainingNumberOfItems) {
+                    count++;
                 }
-            } else if (this.overviewPageIndex > lastPageIndex) {
-                this.overviewPageIndex = 0;
                 if (verbose) {
-                    console.log('Too large overviewPageIndex. Go to first page. pageCapacity:', pageCapacity, 'task.train.length:', task.train.length, 'new page index:', this.overviewPageIndex);
+                    console.log('page:', i, 'count:', count, 'offset:', current_train_offset);
                 }
+                counters.push(count);
+                train_offsets.push(current_train_offset);
+                current_train_offset += count;
+            }
+
+            // Use the computed properties.
+            pageCapacity = counters[pageIndex];
+            train_offset = train_offsets[pageIndex];
+            if (verbose) {
+                console.log('pageCount:', pageCount, 'pageCapacityLimit:', pageCapacityLimit, 'pageCapacity:', pageCapacity, 'task.train.length:', task.train.length);
             }
     
-            train_offset = this.overviewPageIndex * pageCapacity;
             n_train = Math.min(task.train.length - train_offset, pageCapacity);
             if (verbose) {
-                console.log('train_offset:', train_offset, 'n_train:', n_train, 'task.train.length:', task.train.length, 'pageCapacity:', pageCapacity, 'overviewPageIndex:', this.overviewPageIndex);
+                console.log('train_offset:', train_offset, 'n_train:', n_train, 'task.train.length:', task.train.length, 'pageCapacity:', pageCapacity, 'overviewPageIndex:', pageIndex);
             }
     
             let paginatedSizeOfOverviewContent = this.sizeOfOverviewContent(train_offset, n_train);
@@ -1278,15 +1356,22 @@ class PageController {
             console.log('resolved cellSize:', cellSize);
         }
 
-        if (pageCount <= 1) {
-            this.hidePagination();
-        } else {
-            this.showPagination();
+        this.overviewPageIndexDelta = 0;
+        let newPaginationState = new PaginationState(
+            pageIndex, 
+            pageCount, 
+            pageCapacity, 
+            train_offset, 
+            n_train
+        );
+        if (firstTime || lastPaginationState.isEqualTo(newPaginationState) == false) {
+            if (verbose) {
+                console.log('Pagination state changed:', lastPaginationState, newPaginationState);
+            }
+            this.overviewPaginationState = newPaginationState;
+            this.updatePagination();
+            this.historyLogPagination();
         }
-
-        // Show the current page index in the UI
-        let el_pagination_status = document.getElementById('pagination-status');
-        el_pagination_status.innerText = `${this.overviewPageIndex + 1} of ${lastPageIndex + 1}`;
 
         let el_tr0 = document.getElementById('task-overview-table-row0');
         let el_tr1 = document.getElementById('task-overview-table-row1');
@@ -2860,12 +2945,12 @@ class PageController {
     }
 
     paginationGotoPreviousPage() {
-        this.overviewPageIndex -= 1;
+        this.overviewPageIndexDelta = -1;
         this.updateOverview();
     }
 
     paginationGotoNextPage() {
-        this.overviewPageIndex += 1;
+        this.overviewPageIndexDelta = 1;
         this.updateOverview();
     }
 
@@ -2878,6 +2963,47 @@ class PageController {
     showPagination() {
         let el = document.getElementById("pagination");
         el.classList.remove('hidden');
+    }
+
+    updatePagination() {
+        let state = this.overviewPaginationState;
+        if (!state) {
+            this.hidePagination();
+            return;
+        }
+
+        if (state.pageCount <= 1) {
+            this.hidePagination();
+        } else {
+            this.showPagination();
+        }
+
+        // Show the current page index in the UI
+        let el_pagination_status = document.getElementById('pagination-status');
+        el_pagination_status.innerText = `${state.pageIndex + 1} of ${state.pageCount}`;
+    }
+
+    historyLogPagination() {
+        let state = this.overviewPaginationState;
+        if (!state) {
+            return;
+        }
+        if (state.pageCount <= 1) {
+            let message = "all train pairs fit in overview area";
+            this.history.log(message, {
+                action: 'pagination-disabled',
+            });
+        } else {
+            let message = `${state.pageIndex + 1} of ${state.pageCount}, too many train pairs to fit inside overview area, using pagination`;
+            this.history.log(message, {
+                action: 'pagination-action',
+                pageIndex: state.pageIndex,
+                pageCount: state.pageCount,
+                pageCapacity: state.pageCapacity,
+                trainOffset: state.trainOffset,
+                trainCount: state.trainCount,
+            });
+        }
     }
 }
 
