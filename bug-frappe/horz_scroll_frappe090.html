@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Project schedule</title>
+<!-- <script src="https://cdn.jsdelivr.net/npm/frappe-gantt@1.0.3/dist/frappe-gantt.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/frappe-gantt@1.0.3/dist/frappe-gantt.min.css"> -->
+
+<script src="https://cdn.jsdelivr.net/npm/frappe-gantt@0.9.0/dist/frappe-gantt.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/frappe-gantt@0.9.0/dist/frappe-gantt.css">
+
+<!-- <script src="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.css"> -->
+<style>
+ body {
+   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+   margin: 2rem;
+ }
+</style>
+</head>
+<body>
+<h1>Project schedule</h1>
+<div id="the-gantt-container"></div>
+
+<script type="module">
+const tasks = [
+  {
+    "id": "4643fb97-63aa-4336-b2cf-dc42d30154e8",
+    "name": "Lunar Station",
+    "start": "2025-05-09",
+    "end": "2058-10-23",
+    "progress": 0,
+    "dependencies": "",
+    "meta": ""
+  },
+  {
+    "id": "4c3fd841-ef1f-4ef8-98f3-d2681c1e7661",
+    "name": "Project Initiation & Planning",
+    "start": "2025-05-09",
+    "end": "2026-02-19",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "4643fb97-63aa-4336-b2cf-dc42d30154e8 SS"
+  },
+  {
+    "id": "d8dca061-15c1-453f-aa9e-06dc14719c50",
+    "name": "Define Project Scope and Objectives",
+    "start": "2025-05-09",
+    "end": "2025-05-25",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "4c3fd841-ef1f-4ef8-98f3-d2681c1e7661 SS"
+  },
+  {
+    "id": "8cec66aa-c75f-45cc-b8fe-5f7394eeb469",
+    "name": "Identify Key Stakeholders and Their Needs",
+    "start": "2025-05-09",
+    "end": "2025-05-13",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "d8dca061-15c1-453f-aa9e-06dc14719c50 SS"
+  },
+  {
+    "id": "de6b5a8c-e02b-474c-a945-e3196f40e258",
+    "name": "Draft Initial Project Scope Document",
+    "start": "2025-05-13",
+    "end": "2025-05-17",
+    "progress": 0,
+    "dependencies": "8cec66aa-c75f-45cc-b8fe-5f7394eeb469",
+    "meta": "8cec66aa-c75f-45cc-b8fe-5f7394eeb469 FS"
+  },
+  {
+    "id": "915947bf-6ccc-474a-8d2a-a5fa88cfff8b",
+    "name": "Obtain Stakeholder Approval on Scope",
+    "start": "2025-05-17",
+    "end": "2025-05-21",
+    "progress": 0,
+    "dependencies": "de6b5a8c-e02b-474c-a945-e3196f40e258",
+    "meta": "de6b5a8c-e02b-474c-a945-e3196f40e258 FS"
+  },
+  {
+    "id": "da62b86b-1ffc-476a-b1f7-d86e948d4681",
+    "name": "Define Measurable Objectives and KPIs",
+    "start": "2025-05-21",
+    "end": "2025-05-25",
+    "progress": 0,
+    "dependencies": "915947bf-6ccc-474a-8d2a-a5fa88cfff8b",
+    "meta": "d8dca061-15c1-453f-aa9e-06dc14719c50 FF, 915947bf-6ccc-474a-8d2a-a5fa88cfff8b FS"
+  },
+  {
+    "id": "50ad41e9-a7c8-47fb-9ede-70020718bf09",
+    "name": "Establish Governance Charter",
+    "start": "2025-05-25",
+    "end": "2025-07-09",
+    "progress": 0,
+    "dependencies": "d8dca061-15c1-453f-aa9e-06dc14719c50",
+    "meta": "d8dca061-15c1-453f-aa9e-06dc14719c50 FS"
+  },
+  {
+    "id": "41ce7dc0-6876-4be3-b9b6-c1f99de2487a",
+    "name": "Define Governance Structure and Roles",
+    "start": "2025-05-25",
+    "end": "2025-06-03",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "50ad41e9-a7c8-47fb-9ede-70020718bf09 SS"
+  },
+  {
+    "id": "d3c15e5d-c0c7-4c37-adda-1b2420109b25",
+    "name": "Draft Governance Charter Document",
+    "start": "2025-06-03",
+    "end": "2025-06-12",
+    "progress": 0,
+    "dependencies": "41ce7dc0-6876-4be3-b9b6-c1f99de2487a",
+    "meta": "41ce7dc0-6876-4be3-b9b6-c1f99de2487a FS"
+  },
+  {
+    "id": "d669cae3-b8e7-4fc5-91bd-033f7da4342c",
+    "name": "Negotiate and Secure Charter Approval",
+    "start": "2025-06-12",
+    "end": "2025-06-21",
+    "progress": 0,
+    "dependencies": "d3c15e5d-c0c7-4c37-adda-1b2420109b25",
+    "meta": "d3c15e5d-c0c7-4c37-adda-1b2420109b25 FS"
+  },
+  {
+    "id": "b8b9fe25-affe-4a8b-929b-383c02ae5750",
+    "name": "Establish Dispute Resolution Mechanisms",
+    "start": "2025-06-21",
+    "end": "2025-06-30",
+    "progress": 0,
+    "dependencies": "d669cae3-b8e7-4fc5-91bd-033f7da4342c",
+    "meta": "d669cae3-b8e7-4fc5-91bd-033f7da4342c FS"
+  },
+  {
+    "id": "1c034537-e8af-43a2-a8c2-7c381268ce0b",
+    "name": "Ensure Regulatory Compliance and Legality",
+    "start": "2025-06-30",
+    "end": "2025-07-09",
+    "progress": 0,
+    "dependencies": "b8b9fe25-affe-4a8b-929b-383c02ae5750",
+    "meta": "50ad41e9-a7c8-47fb-9ede-70020718bf09 FF, b8b9fe25-affe-4a8b-929b-383c02ae5750 FS"
+  },
+  {
+    "id": "f18db2c9-4876-4e16-b5e9-7cafb072783a",
+    "name": "Develop Project Management Plan",
+    "start": "2025-07-09",
+    "end": "2025-08-23",
+    "progress": 0,
+    "dependencies": "50ad41e9-a7c8-47fb-9ede-70020718bf09",
+    "meta": "50ad41e9-a7c8-47fb-9ede-70020718bf09 FS"
+  },
+  {
+    "id": "042bc4ba-cd6b-4d8d-837f-9268efd78cf9",
+    "name": "Define Project Management Methodology",
+    "start": "2025-07-09",
+    "end": "2025-07-18",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "f18db2c9-4876-4e16-b5e9-7cafb072783a SS"
+  },
+  {
+    "id": "b981247d-cbf4-4f51-a482-dd3dd3e04637",
+    "name": "Develop Communication Plan",
+    "start": "2025-07-18",
+    "end": "2025-07-27",
+    "progress": 0,
+    "dependencies": "042bc4ba-cd6b-4d8d-837f-9268efd78cf9",
+    "meta": "042bc4ba-cd6b-4d8d-837f-9268efd78cf9 FS"
+  },
+  {
+    "id": "c57b6325-f1fc-47f3-93d8-79a5232651a5",
+    "name": "Create Risk Management Plan",
+    "start": "2025-07-27",
+    "end": "2025-08-05",
+    "progress": 0,
+    "dependencies": "b981247d-cbf4-4f51-a482-dd3dd3e04637",
+    "meta": "b981247d-cbf4-4f51-a482-dd3dd3e04637 FS"
+  },
+  {
+    "id": "9744a7d9-fb25-479d-b7ba-155d16a45dcb",
+    "name": "Establish Change Management Process",
+    "start": "2025-08-05",
+    "end": "2025-08-14",
+    "progress": 0,
+    "dependencies": "c57b6325-f1fc-47f3-93d8-79a5232651a5",
+    "meta": "c57b6325-f1fc-47f3-93d8-79a5232651a5 FS"
+  },
+  {
+    "id": "e2b104c5-269b-40c7-9b13-29f9758d7009",
+    "name": "Define Resource Allocation Strategy",
+    "start": "2025-08-14",
+    "end": "2025-08-23",
+    "progress": 0,
+    "dependencies": "9744a7d9-fb25-479d-b7ba-155d16a45dcb",
+    "meta": "f18db2c9-4876-4e16-b5e9-7cafb072783a FF, 9744a7d9-fb25-479d-b7ba-155d16a45dcb FS"
+  },
+  {
+    "id": "18b4a22c-a9a5-439e-9f1b-95eb8afb7367",
+    "name": "Secure Initial Funding",
+    "start": "2025-08-23",
+    "end": "2026-02-19",
+    "progress": 0,
+    "dependencies": "f18db2c9-4876-4e16-b5e9-7cafb072783a",
+    "meta": "4c3fd841-ef1f-4ef8-98f3-d2681c1e7661 FF, f18db2c9-4876-4e16-b5e9-7cafb072783a FS"
+  },
+  {
+    "id": "7c489a3d-338b-428a-b4f5-e7b9636b529b",
+    "name": "Identify Potential Funding Sources",
+    "start": "2025-08-23",
+    "end": "2025-09-28",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "18b4a22c-a9a5-439e-9f1b-95eb8afb7367 SS"
+  },
+  {
+    "id": "9ff403a4-58cb-45f5-b066-bcb68cc40d20",
+    "name": "Prepare Funding Proposals",
+    "start": "2025-09-28",
+    "end": "2025-11-03",
+    "progress": 0,
+    "dependencies": "7c489a3d-338b-428a-b4f5-e7b9636b529b",
+    "meta": "7c489a3d-338b-428a-b4f5-e7b9636b529b FS"
+  },
+  {
+    "id": "2606f6f7-db06-4781-bc1b-234a35d8e4d4",
+    "name": "Engage with Potential Investors",
+    "start": "2025-11-03",
+    "end": "2025-12-09",
+    "progress": 0,
+    "dependencies": "9ff403a4-58cb-45f5-b066-bcb68cc40d20",
+    "meta": "9ff403a4-58cb-45f5-b066-bcb68cc40d20 FS"
+  },
+  {
+    "id": "fcc6a06e-f9c2-4819-9ed9-0085bab73926",
+    "name": "Negotiate Funding Agreements",
+    "start": "2025-12-09",
+    "end": "2026-01-14",
+    "progress": 0,
+    "dependencies": "2606f6f7-db06-4781-bc1b-234a35d8e4d4",
+    "meta": "2606f6f7-db06-4781-bc1b-234a35d8e4d4 FS"
+  },
+  {
+    "id": "3820f028-375f-45c5-8c80-f5a8f066a457",
+    "name": "Secure Legal Approvals",
+    "start": "2026-01-14",
+    "end": "2026-02-19",
+    "progress": 0,
+    "dependencies": "fcc6a06e-f9c2-4819-9ed9-0085bab73926",
+    "meta": "18b4a22c-a9a5-439e-9f1b-95eb8afb7367 FF, fcc6a06e-f9c2-4819-9ed9-0085bab73926 FS"
+  },
+  {
+    "id": "ade6171f-2d82-4aa5-8f1c-a1bd6d254d27",
+    "name": "International Collaboration & Recruitment",
+    "start": "2026-02-19",
+    "end": "2029-12-05",
+    "progress": 0,
+    "dependencies": "4c3fd841-ef1f-4ef8-98f3-d2681c1e7661",
+    "meta": "4c3fd841-ef1f-4ef8-98f3-d2681c1e7661 FS"
+  },
+  {
+    "id": "f727a845-bb2a-4bc5-b77a-dcb96ffb569e",
+    "name": "Recruit Participating Nations",
+    "start": "2026-02-19",
+    "end": "2027-02-19",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "ade6171f-2d82-4aa5-8f1c-a1bd6d254d27 SS"
+  },
+  {
+    "id": "db0db147-10aa-47bd-8d26-f2130789e0aa",
+    "name": "Identify potential partner nations",
+    "start": "2026-02-19",
+    "end": "2026-05-03",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "f727a845-bb2a-4bc5-b77a-dcb96ffb569e SS"
+  },
+  {
+    "id": "1d105858-19c5-4de4-b9eb-b3053781f7b5",
+    "name": "Assess national interests and priorities",
+    "start": "2026-05-03",
+    "end": "2026-07-15",
+    "progress": 0,
+    "dependencies": "db0db147-10aa-47bd-8d26-f2130789e0aa",
+    "meta": "db0db147-10aa-47bd-8d26-f2130789e0aa FS"
+  },
+  {
+    "id": "04d3bf32-0dbf-4ade-a2c8-15f524b2d5fc",
+    "name": "Develop tailored engagement strategies",
+    "start": "2026-07-15",
+    "end": "2026-09-26",
+    "progress": 0,
+    "dependencies": "1d105858-19c5-4de4-b9eb-b3053781f7b5",
+    "meta": "1d105858-19c5-4de4-b9eb-b3053781f7b5 FS"
+  },
+  {
+    "id": "8fb39e36-029d-4d37-af30-a9f6bf92e9dc",
+    "name": "Negotiate and formalize agreements",
+    "start": "2026-09-26",
+    "end": "2026-12-08",
+    "progress": 0,
+    "dependencies": "04d3bf32-0dbf-4ade-a2c8-15f524b2d5fc",
+    "meta": "04d3bf32-0dbf-4ade-a2c8-15f524b2d5fc FS"
+  },
+  {
+    "id": "174214d3-6e3d-4717-a4a1-d47779380b59",
+    "name": "Maintain diplomatic relations",
+    "start": "2026-12-08",
+    "end": "2027-02-19",
+    "progress": 0,
+    "dependencies": "8fb39e36-029d-4d37-af30-a9f6bf92e9dc",
+    "meta": "f727a845-bb2a-4bc5-b77a-dcb96ffb569e FF, 8fb39e36-029d-4d37-af30-a9f6bf92e9dc FS"
+  },
+  {
+    "id": "590de2f1-0e91-412e-ac92-b850d8dea705",
+    "name": "Recruit Participating Institutions",
+    "start": "2027-02-19",
+    "end": "2027-09-17",
+    "progress": 0,
+    "dependencies": "f727a845-bb2a-4bc5-b77a-dcb96ffb569e",
+    "meta": "f727a845-bb2a-4bc5-b77a-dcb96ffb569e FS"
+  },
+  {
+    "id": "1150d609-4881-416b-aeb0-1a2c4b5d8b88",
+    "name": "Identify Target Institutions",
+    "start": "2027-02-19",
+    "end": "2027-04-02",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "590de2f1-0e91-412e-ac92-b850d8dea705 SS"
+  },
+  {
+    "id": "bf49157f-bc7b-48b0-a2fe-f22984729733",
+    "name": "Develop Partnership Proposals",
+    "start": "2027-04-02",
+    "end": "2027-05-14",
+    "progress": 0,
+    "dependencies": "1150d609-4881-416b-aeb0-1a2c4b5d8b88",
+    "meta": "1150d609-4881-416b-aeb0-1a2c4b5d8b88 FS"
+  },
+  {
+    "id": "fc325b97-35e9-421b-9b33-7476fc1b5a19",
+    "name": "Conduct Outreach and Engagement",
+    "start": "2027-05-14",
+    "end": "2027-06-25",
+    "progress": 0,
+    "dependencies": "bf49157f-bc7b-48b0-a2fe-f22984729733",
+    "meta": "bf49157f-bc7b-48b0-a2fe-f22984729733 FS"
+  },
+  {
+    "id": "09be8dd1-7fc4-4876-b322-06f1f1930665",
+    "name": "Negotiate and Formalize Agreements",
+    "start": "2027-06-25",
+    "end": "2027-08-06",
+    "progress": 0,
+    "dependencies": "fc325b97-35e9-421b-9b33-7476fc1b5a19",
+    "meta": "fc325b97-35e9-421b-9b33-7476fc1b5a19 FS"
+  },
+  {
+    "id": "1808af1a-9264-479b-9963-69404fcc4138",
+    "name": "Onboard Participating Institutions",
+    "start": "2027-08-06",
+    "end": "2027-09-17",
+    "progress": 0,
+    "dependencies": "09be8dd1-7fc4-4876-b322-06f1f1930665",
+    "meta": "590de2f1-0e91-412e-ac92-b850d8dea705 FF, 09be8dd1-7fc4-4876-b322-06f1f1930665 FS"
+  },
+  {
+    "id": "7e25d93b-b024-4cea-a3ba-7386c1a63d6f",
+    "name": "Recruit Participating Scientists",
+    "start": "2027-09-17",
+    "end": "2028-06-13",
+    "progress": 0,
+    "dependencies": "590de2f1-0e91-412e-ac92-b850d8dea705",
+    "meta": "590de2f1-0e91-412e-ac92-b850d8dea705 FS"
+  },
+  {
+    "id": "99de99da-5dfc-4ed7-9e29-dd163b05e7a6",
+    "name": "Identify Target Scientist Demographics",
+    "start": "2027-09-17",
+    "end": "2027-11-10",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "7e25d93b-b024-4cea-a3ba-7386c1a63d6f SS"
+  },
+  {
+    "id": "307bef17-d872-488e-a20a-0b3f910f9cab",
+    "name": "Develop Scientist Recruitment Strategy",
+    "start": "2027-11-10",
+    "end": "2028-01-03",
+    "progress": 0,
+    "dependencies": "99de99da-5dfc-4ed7-9e29-dd163b05e7a6",
+    "meta": "99de99da-5dfc-4ed7-9e29-dd163b05e7a6 FS"
+  },
+  {
+    "id": "59bdd2e9-5d57-4037-915b-3e46460ebb0a",
+    "name": "Establish Application and Selection Process",
+    "start": "2028-01-03",
+    "end": "2028-02-26",
+    "progress": 0,
+    "dependencies": "307bef17-d872-488e-a20a-0b3f910f9cab",
+    "meta": "307bef17-d872-488e-a20a-0b3f910f9cab FS"
+  },
+  {
+    "id": "8858fad8-df1b-421a-a9ec-9aadc3bce4b6",
+    "name": "Conduct Interviews and Evaluate Candidates",
+    "start": "2028-02-26",
+    "end": "2028-04-20",
+    "progress": 0,
+    "dependencies": "59bdd2e9-5d57-4037-915b-3e46460ebb0a",
+    "meta": "59bdd2e9-5d57-4037-915b-3e46460ebb0a FS"
+  },
+  {
+    "id": "ce6b394c-51ca-4f99-9ecf-7608b5997773",
+    "name": "Onboard and Integrate Recruited Scientists",
+    "start": "2028-04-20",
+    "end": "2028-06-13",
+    "progress": 0,
+    "dependencies": "8858fad8-df1b-421a-a9ec-9aadc3bce4b6",
+    "meta": "7e25d93b-b024-4cea-a3ba-7386c1a63d6f FF, 8858fad8-df1b-421a-a9ec-9aadc3bce4b6 FS"
+  },
+  {
+    "id": "b9328efc-a7a1-4068-bf46-178f448bad7d",
+    "name": "Establish International Agreements",
+    "start": "2028-06-13",
+    "end": "2029-12-05",
+    "progress": 0,
+    "dependencies": "7e25d93b-b024-4cea-a3ba-7386c1a63d6f",
+    "meta": "ade6171f-2d82-4aa5-8f1c-a1bd6d254d27 FF, 7e25d93b-b024-4cea-a3ba-7386c1a63d6f FS"
+  },
+  {
+    "id": "fcf08b96-8e33-472b-ab28-a3a4b45ba91d",
+    "name": "Define Agreement Scope and Objectives",
+    "start": "2028-06-13",
+    "end": "2028-09-29",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "b9328efc-a7a1-4068-bf46-178f448bad7d SS"
+  },
+  {
+    "id": "321d5a49-ab83-41fd-95ef-15900eef2376",
+    "name": "Negotiate Agreement Terms with Nations",
+    "start": "2028-09-29",
+    "end": "2029-01-15",
+    "progress": 0,
+    "dependencies": "fcf08b96-8e33-472b-ab28-a3a4b45ba91d",
+    "meta": "fcf08b96-8e33-472b-ab28-a3a4b45ba91d FS"
+  },
+  {
+    "id": "bbc73d98-0c90-42cd-85b6-574d55c7b76d",
+    "name": "Draft and Review Legal Agreements",
+    "start": "2029-01-15",
+    "end": "2029-05-03",
+    "progress": 0,
+    "dependencies": "321d5a49-ab83-41fd-95ef-15900eef2376",
+    "meta": "321d5a49-ab83-41fd-95ef-15900eef2376 FS"
+  },
+  {
+    "id": "a40f3ef9-3935-4cc4-8e9c-6e3bd4c6851a",
+    "name": "Obtain Formal Approvals and Signatures",
+    "start": "2029-05-03",
+    "end": "2029-08-19",
+    "progress": 0,
+    "dependencies": "bbc73d98-0c90-42cd-85b6-574d55c7b76d",
+    "meta": "bbc73d98-0c90-42cd-85b6-574d55c7b76d FS"
+  },
+  {
+    "id": "54e66e3d-1e45-4cc1-ae37-5fdf253ddce3",
+    "name": "Implement Agreement Monitoring and Enforcement",
+    "start": "2029-08-19",
+    "end": "2029-12-05",
+    "progress": 0,
+    "dependencies": "a40f3ef9-3935-4cc4-8e9c-6e3bd4c6851a",
+    "meta": "b9328efc-a7a1-4068-bf46-178f448bad7d FF, a40f3ef9-3935-4cc4-8e9c-6e3bd4c6851a FS"
+  },
+  {
+    "id": "de6a8d24-7c5b-43ad-b060-89af349e4fc9",
+    "name": "Technology Development & Integration",
+    "start": "2029-12-05",
+    "end": "2047-12-07",
+    "progress": 0,
+    "dependencies": "ade6171f-2d82-4aa5-8f1c-a1bd6d254d27",
+    "meta": "ade6171f-2d82-4aa5-8f1c-a1bd6d254d27 FS"
+  },
+  {
+    "id": "aeae5ab2-b1a0-4172-b568-94374eb1f704",
+    "name": "Develop Autonomous Construction Technology",
+    "start": "2029-12-05",
+    "end": "2032-12-04",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "de6a8d24-7c5b-43ad-b060-89af349e4fc9 SS"
+  },
+  {
+    "id": "01343b86-22ed-4d8d-b725-2f8201581d45",
+    "name": "Design Autonomous Construction Robots",
+    "start": "2029-12-05",
+    "end": "2030-07-12",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "aeae5ab2-b1a0-4172-b568-94374eb1f704 SS"
+  },
+  {
+    "id": "af34d781-4250-4df4-bdd0-5cde226ca45d",
+    "name": "Develop Lunar Construction Algorithms",
+    "start": "2030-07-12",
+    "end": "2031-02-16",
+    "progress": 0,
+    "dependencies": "01343b86-22ed-4d8d-b725-2f8201581d45",
+    "meta": "01343b86-22ed-4d8d-b725-2f8201581d45 FS"
+  },
+  {
+    "id": "4ead008c-13b9-4306-a7be-3024a2940d6d",
+    "name": "Test Autonomous Construction in Simulation",
+    "start": "2031-02-16",
+    "end": "2031-09-23",
+    "progress": 0,
+    "dependencies": "af34d781-4250-4df4-bdd0-5cde226ca45d",
+    "meta": "af34d781-4250-4df4-bdd0-5cde226ca45d FS"
+  },
+  {
+    "id": "97311acd-9b20-46c5-94df-2878474954bd",
+    "name": "Fabricate and Test Robot Prototypes",
+    "start": "2031-09-23",
+    "end": "2032-04-29",
+    "progress": 0,
+    "dependencies": "4ead008c-13b9-4306-a7be-3024a2940d6d",
+    "meta": "4ead008c-13b9-4306-a7be-3024a2940d6d FS"
+  },
+  {
+    "id": "71c7a9b7-4220-4d1e-85c0-680e4ca95639",
+    "name": "Adapt to Lunar Environment Conditions",
+    "start": "2032-04-29",
+    "end": "2032-12-04",
+    "progress": 0,
+    "dependencies": "97311acd-9b20-46c5-94df-2878474954bd",
+    "meta": "aeae5ab2-b1a0-4172-b568-94374eb1f704 FF, 97311acd-9b20-46c5-94df-2878474954bd FS"
+  },
+  {
+    "id": "36c0cdc6-a14f-45fb-a972-74538378989b",
+    "name": "Develop In-Situ Resource Utilization (ISRU) Technology",
+    "start": "2032-12-04",
+    "end": "2036-12-03",
+    "progress": 0,
+    "dependencies": "aeae5ab2-b1a0-4172-b568-94374eb1f704",
+    "meta": "aeae5ab2-b1a0-4172-b568-94374eb1f704 FS"
+  },
+  {
+    "id": "b2e6a3ea-1789-4670-8956-36b7c0355f9c",
+    "name": "Lunar Regolith Acquisition System Design",
+    "start": "2032-12-04",
+    "end": "2033-12-04",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "36c0cdc6-a14f-45fb-a972-74538378989b SS"
+  },
+  {
+    "id": "1fb0fae2-9547-4f67-8525-380e31b39693",
+    "name": "Resource Processing Unit Development",
+    "start": "2033-12-04",
+    "end": "2034-12-04",
+    "progress": 0,
+    "dependencies": "b2e6a3ea-1789-4670-8956-36b7c0355f9c",
+    "meta": "b2e6a3ea-1789-4670-8956-36b7c0355f9c FS"
+  },
+  {
+    "id": "1b4619dd-e6ae-4b9e-9bee-20c739f9eb18",
+    "name": "ISRU System Integration and Testing",
+    "start": "2034-12-04",
+    "end": "2035-12-04",
+    "progress": 0,
+    "dependencies": "1fb0fae2-9547-4f67-8525-380e31b39693",
+    "meta": "1fb0fae2-9547-4f67-8525-380e31b39693 FS"
+  },
+  {
+    "id": "2387eced-9e03-4116-8743-9e6e65a841f6",
+    "name": "Power and Thermal Management Design",
+    "start": "2035-12-04",
+    "end": "2036-12-03",
+    "progress": 0,
+    "dependencies": "1b4619dd-e6ae-4b9e-9bee-20c739f9eb18",
+    "meta": "36c0cdc6-a14f-45fb-a972-74538378989b FF, 1b4619dd-e6ae-4b9e-9bee-20c739f9eb18 FS"
+  },
+  {
+    "id": "301d846b-2f93-47bd-9824-20c548f084d3",
+    "name": "Develop Modular Surface Fission Reactor",
+    "start": "2036-12-03",
+    "end": "2042-06-05",
+    "progress": 0,
+    "dependencies": "36c0cdc6-a14f-45fb-a972-74538378989b",
+    "meta": "36c0cdc6-a14f-45fb-a972-74538378989b FS"
+  },
+  {
+    "id": "da8db8e5-5274-49d0-acc6-afe693fde564",
+    "name": "Reactor design and safety analysis",
+    "start": "2036-12-03",
+    "end": "2038-01-09",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "301d846b-2f93-47bd-9824-20c548f084d3 SS"
+  },
+  {
+    "id": "3dbf06d5-0fb6-440f-ae66-45577f7d8d95",
+    "name": "Secure regulatory approvals and permits",
+    "start": "2038-01-09",
+    "end": "2039-02-15",
+    "progress": 0,
+    "dependencies": "da8db8e5-5274-49d0-acc6-afe693fde564",
+    "meta": "da8db8e5-5274-49d0-acc6-afe693fde564 FS"
+  },
+  {
+    "id": "77f76147-b9d4-471e-aec3-8a0d3bfc5b40",
+    "name": "Fabricate and test reactor components",
+    "start": "2039-02-15",
+    "end": "2040-03-23",
+    "progress": 0,
+    "dependencies": "3dbf06d5-0fb6-440f-ae66-45577f7d8d95",
+    "meta": "3dbf06d5-0fb6-440f-ae66-45577f7d8d95 FS"
+  },
+  {
+    "id": "4e03b05a-e4da-408b-a33a-8e2a03c3880e",
+    "name": "Develop reactor control and monitoring systems",
+    "start": "2040-03-23",
+    "end": "2041-04-29",
+    "progress": 0,
+    "dependencies": "77f76147-b9d4-471e-aec3-8a0d3bfc5b40",
+    "meta": "77f76147-b9d4-471e-aec3-8a0d3bfc5b40 FS"
+  },
+  {
+    "id": "6f1c1123-7339-492d-b554-eb7ae90983ba",
+    "name": "Integrate reactor with lunar base systems",
+    "start": "2041-04-29",
+    "end": "2042-06-05",
+    "progress": 0,
+    "dependencies": "4e03b05a-e4da-408b-a33a-8e2a03c3880e",
+    "meta": "301d846b-2f93-47bd-9824-20c548f084d3 FF, 4e03b05a-e4da-408b-a33a-8e2a03c3880e FS"
+  },
+  {
+    "id": "ed63eb95-4e58-4ec6-99ce-7b5a61b3472a",
+    "name": "Integrate Life Support Systems",
+    "start": "2042-06-05",
+    "end": "2045-06-04",
+    "progress": 0,
+    "dependencies": "301d846b-2f93-47bd-9824-20c548f084d3",
+    "meta": "301d846b-2f93-47bd-9824-20c548f084d3 FS"
+  },
+  {
+    "id": "aad6a6b7-6694-43d1-89b6-e28c1f416d5c",
+    "name": "Define Life Support System Requirements",
+    "start": "2042-06-05",
+    "end": "2043-01-10",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "ed63eb95-4e58-4ec6-99ce-7b5a61b3472a SS"
+  },
+  {
+    "id": "647a3182-85b1-4305-aac5-b2b239b63d36",
+    "name": "Design Closed-Loop System Architecture",
+    "start": "2043-01-10",
+    "end": "2043-08-17",
+    "progress": 0,
+    "dependencies": "aad6a6b7-6694-43d1-89b6-e28c1f416d5c",
+    "meta": "aad6a6b7-6694-43d1-89b6-e28c1f416d5c FS"
+  },
+  {
+    "id": "cb974009-2903-4921-b3ee-2b90045604b1",
+    "name": "Develop and Test Prototype Components",
+    "start": "2043-08-17",
+    "end": "2044-03-23",
+    "progress": 0,
+    "dependencies": "647a3182-85b1-4305-aac5-b2b239b63d36",
+    "meta": "647a3182-85b1-4305-aac5-b2b239b63d36 FS"
+  },
+  {
+    "id": "acf254a5-65df-4777-ad04-642d16d803e2",
+    "name": "Integrate and Validate Life Support Systems",
+    "start": "2044-03-23",
+    "end": "2044-10-28",
+    "progress": 0,
+    "dependencies": "cb974009-2903-4921-b3ee-2b90045604b1",
+    "meta": "cb974009-2903-4921-b3ee-2b90045604b1 FS"
+  },
+  {
+    "id": "26cc8f49-c7d5-4e39-a307-d28e0d6c0f5b",
+    "name": "Plan for Psychological Support",
+    "start": "2044-10-28",
+    "end": "2045-06-04",
+    "progress": 0,
+    "dependencies": "acf254a5-65df-4777-ad04-642d16d803e2",
+    "meta": "ed63eb95-4e58-4ec6-99ce-7b5a61b3472a FF, acf254a5-65df-4777-ad04-642d16d803e2 FS"
+  },
+  {
+    "id": "663e0b6d-de70-4ff3-8490-576aac028f7f",
+    "name": "Establish Communication Infrastructure",
+    "start": "2045-06-04",
+    "end": "2047-12-07",
+    "progress": 0,
+    "dependencies": "ed63eb95-4e58-4ec6-99ce-7b5a61b3472a",
+    "meta": "de6a8d24-7c5b-43ad-b060-89af349e4fc9 FF, ed63eb95-4e58-4ec6-99ce-7b5a61b3472a FS"
+  },
+  {
+    "id": "6b406194-2bc1-4cc5-994d-117ef7e1287e",
+    "name": "Select Lunar Communication Frequencies",
+    "start": "2045-06-04",
+    "end": "2046-01-19",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "663e0b6d-de70-4ff3-8490-576aac028f7f SS"
+  },
+  {
+    "id": "dd90542e-ebc9-4cdf-bfec-4dd135e5c20e",
+    "name": "Design Lunar Communication Network",
+    "start": "2046-01-19",
+    "end": "2046-09-05",
+    "progress": 0,
+    "dependencies": "6b406194-2bc1-4cc5-994d-117ef7e1287e",
+    "meta": "6b406194-2bc1-4cc5-994d-117ef7e1287e FS"
+  },
+  {
+    "id": "19109791-58a2-4ea1-ad3e-17793b2cc0c2",
+    "name": "Develop Communication Hardware and Software",
+    "start": "2046-09-05",
+    "end": "2047-04-22",
+    "progress": 0,
+    "dependencies": "dd90542e-ebc9-4cdf-bfec-4dd135e5c20e",
+    "meta": "dd90542e-ebc9-4cdf-bfec-4dd135e5c20e FS"
+  },
+  {
+    "id": "8f707fb7-a0ba-4fcf-8af2-4f0f4de1b668",
+    "name": "Test Communication System in Lunar Environment",
+    "start": "2047-04-22",
+    "end": "2047-12-07",
+    "progress": 0,
+    "dependencies": "19109791-58a2-4ea1-ad3e-17793b2cc0c2",
+    "meta": "663e0b6d-de70-4ff3-8490-576aac028f7f FF, 19109791-58a2-4ea1-ad3e-17793b2cc0c2 FS"
+  },
+  {
+    "id": "917af384-6fc5-4525-b1e4-664d8f58655f",
+    "name": "Lunar Station Construction & Deployment",
+    "start": "2047-12-07",
+    "end": "2053-01-22",
+    "progress": 0,
+    "dependencies": "de6a8d24-7c5b-43ad-b060-89af349e4fc9",
+    "meta": "de6a8d24-7c5b-43ad-b060-89af349e4fc9 FS"
+  },
+  {
+    "id": "55037595-ff00-4b2d-bd19-835efa05a6d6",
+    "name": "Manufacture Lunar Station Components",
+    "start": "2047-12-07",
+    "end": "2050-06-09",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "917af384-6fc5-4525-b1e4-664d8f58655f SS"
+  },
+  {
+    "id": "f82bb970-4704-4b11-9c79-b8095cca95fb",
+    "name": "Design Lunar Station Components",
+    "start": "2047-12-07",
+    "end": "2048-06-07",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "55037595-ff00-4b2d-bd19-835efa05a6d6 SS"
+  },
+  {
+    "id": "06145bbe-3e8b-42f1-bc81-47fc430fdc5e",
+    "name": "Procure Raw Materials and Parts",
+    "start": "2048-06-07",
+    "end": "2048-12-07",
+    "progress": 0,
+    "dependencies": "f82bb970-4704-4b11-9c79-b8095cca95fb",
+    "meta": "f82bb970-4704-4b11-9c79-b8095cca95fb FS"
+  },
+  {
+    "id": "198ed4a1-b89d-407f-a52b-ecbf3fba7072",
+    "name": "Fabricate Structural Elements",
+    "start": "2048-12-07",
+    "end": "2049-06-08",
+    "progress": 0,
+    "dependencies": "06145bbe-3e8b-42f1-bc81-47fc430fdc5e",
+    "meta": "06145bbe-3e8b-42f1-bc81-47fc430fdc5e FS"
+  },
+  {
+    "id": "e22b652e-7a31-45bf-9319-e67570d63f1d",
+    "name": "Integrate Internal Systems",
+    "start": "2049-06-08",
+    "end": "2049-12-08",
+    "progress": 0,
+    "dependencies": "198ed4a1-b89d-407f-a52b-ecbf3fba7072",
+    "meta": "198ed4a1-b89d-407f-a52b-ecbf3fba7072 FS"
+  },
+  {
+    "id": "53595482-992e-4301-a398-ca8c090e4a06",
+    "name": "Conduct Component Testing and Validation",
+    "start": "2049-12-08",
+    "end": "2050-06-09",
+    "progress": 0,
+    "dependencies": "e22b652e-7a31-45bf-9319-e67570d63f1d",
+    "meta": "55037595-ff00-4b2d-bd19-835efa05a6d6 FF, e22b652e-7a31-45bf-9319-e67570d63f1d FS"
+  },
+  {
+    "id": "62cac598-138e-437d-899a-05272a2f1413",
+    "name": "Transport Components to Lunar Orbit",
+    "start": "2050-06-09",
+    "end": "2051-03-08",
+    "progress": 0,
+    "dependencies": "55037595-ff00-4b2d-bd19-835efa05a6d6",
+    "meta": "55037595-ff00-4b2d-bd19-835efa05a6d6 FS"
+  },
+  {
+    "id": "9d4c3d24-6541-4a40-b97d-f15fa9869e3d",
+    "name": "Secure Launch Vehicle Contracts",
+    "start": "2050-06-09",
+    "end": "2050-08-16",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "62cac598-138e-437d-899a-05272a2f1413 SS"
+  },
+  {
+    "id": "f373d01f-1788-484e-b7c5-abd10d993599",
+    "name": "Prepare Components for Launch",
+    "start": "2050-08-16",
+    "end": "2050-10-23",
+    "progress": 0,
+    "dependencies": "9d4c3d24-6541-4a40-b97d-f15fa9869e3d",
+    "meta": "9d4c3d24-6541-4a40-b97d-f15fa9869e3d FS"
+  },
+  {
+    "id": "fb4799fa-904d-4c78-8701-058102fad941",
+    "name": "Transport Components to Launch Site",
+    "start": "2050-10-23",
+    "end": "2050-12-30",
+    "progress": 0,
+    "dependencies": "f373d01f-1788-484e-b7c5-abd10d993599",
+    "meta": "f373d01f-1788-484e-b7c5-abd10d993599 FS"
+  },
+  {
+    "id": "5b78d343-d034-468d-9ff7-104d15ac13d5",
+    "name": "Conduct Pre-Launch Integration Activities",
+    "start": "2050-12-30",
+    "end": "2051-03-08",
+    "progress": 0,
+    "dependencies": "fb4799fa-904d-4c78-8701-058102fad941",
+    "meta": "62cac598-138e-437d-899a-05272a2f1413 FF, fb4799fa-904d-4c78-8701-058102fad941 FS"
+  },
+  {
+    "id": "8be294e4-bcce-4177-943b-fea91ec1a549",
+    "name": "Construct Lunar Station Modules",
+    "start": "2051-03-08",
+    "end": "2052-09-08",
+    "progress": 0,
+    "dependencies": "62cac598-138e-437d-899a-05272a2f1413",
+    "meta": "62cac598-138e-437d-899a-05272a2f1413 FS"
+  },
+  {
+    "id": "909fb86b-333f-4201-bd66-a07c6c7370a0",
+    "name": "Prepare module construction site",
+    "start": "2051-03-08",
+    "end": "2051-06-26",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "8be294e4-bcce-4177-943b-fea91ec1a549 SS"
+  },
+  {
+    "id": "80d9c198-c455-4cca-93d4-e0a3304f1bb1",
+    "name": "Assemble module structural framework",
+    "start": "2051-06-26",
+    "end": "2051-10-14",
+    "progress": 0,
+    "dependencies": "909fb86b-333f-4201-bd66-a07c6c7370a0",
+    "meta": "909fb86b-333f-4201-bd66-a07c6c7370a0 FS"
+  },
+  {
+    "id": "b6fb90ca-5513-4fed-aadf-fb33ce97caf3",
+    "name": "Install module internal systems",
+    "start": "2051-10-14",
+    "end": "2052-02-01",
+    "progress": 0,
+    "dependencies": "80d9c198-c455-4cca-93d4-e0a3304f1bb1",
+    "meta": "80d9c198-c455-4cca-93d4-e0a3304f1bb1 FS"
+  },
+  {
+    "id": "a94b4bef-3b92-48d4-a18c-6b13b351478b",
+    "name": "Seal and pressurize module",
+    "start": "2052-02-01",
+    "end": "2052-05-21",
+    "progress": 0,
+    "dependencies": "b6fb90ca-5513-4fed-aadf-fb33ce97caf3",
+    "meta": "b6fb90ca-5513-4fed-aadf-fb33ce97caf3 FS"
+  },
+  {
+    "id": "f6926692-ad44-4686-8fc5-f97fdf49ad0d",
+    "name": "Connect modules and test interfaces",
+    "start": "2052-05-21",
+    "end": "2052-09-08",
+    "progress": 0,
+    "dependencies": "a94b4bef-3b92-48d4-a18c-6b13b351478b",
+    "meta": "8be294e4-bcce-4177-943b-fea91ec1a549 FF, a94b4bef-3b92-48d4-a18c-6b13b351478b FS"
+  },
+  {
+    "id": "efc6b58a-e0e0-4654-82c1-ba972ce48ec4",
+    "name": "Deploy Lunar Landers and Rovers",
+    "start": "2052-09-08",
+    "end": "2053-01-22",
+    "progress": 0,
+    "dependencies": "8be294e4-bcce-4177-943b-fea91ec1a549",
+    "meta": "917af384-6fc5-4525-b1e4-664d8f58655f FF, 8be294e4-bcce-4177-943b-fea91ec1a549 FS"
+  },
+  {
+    "id": "73e1de95-5968-49d3-bea7-aede3473dfad",
+    "name": "Select Lunar Lander and Rover Models",
+    "start": "2052-09-08",
+    "end": "2052-10-12",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "efc6b58a-e0e0-4654-82c1-ba972ce48ec4 SS"
+  },
+  {
+    "id": "ca15f9b6-0fd7-4a1d-b8c3-243ec9b2854e",
+    "name": "Develop Landing and Deployment Procedures",
+    "start": "2052-10-12",
+    "end": "2052-11-15",
+    "progress": 0,
+    "dependencies": "73e1de95-5968-49d3-bea7-aede3473dfad",
+    "meta": "73e1de95-5968-49d3-bea7-aede3473dfad FS"
+  },
+  {
+    "id": "774f695b-eacf-462b-85d0-2ccd392fa671",
+    "name": "Test Lander and Rover Performance",
+    "start": "2052-11-15",
+    "end": "2052-12-19",
+    "progress": 0,
+    "dependencies": "ca15f9b6-0fd7-4a1d-b8c3-243ec9b2854e",
+    "meta": "ca15f9b6-0fd7-4a1d-b8c3-243ec9b2854e FS"
+  },
+  {
+    "id": "cf143379-e8ed-41b1-8425-15fb0ae6fc09",
+    "name": "Integrate Rovers with Station Systems",
+    "start": "2052-12-19",
+    "end": "2053-01-22",
+    "progress": 0,
+    "dependencies": "774f695b-eacf-462b-85d0-2ccd392fa671",
+    "meta": "efc6b58a-e0e0-4654-82c1-ba972ce48ec4 FF, 774f695b-eacf-462b-85d0-2ccd392fa671 FS"
+  },
+  {
+    "id": "5754268f-9631-46f5-9e3b-de5a40b12aba",
+    "name": "Operations & Maintenance",
+    "start": "2053-01-22",
+    "end": "2058-03-23",
+    "progress": 0,
+    "dependencies": "917af384-6fc5-4525-b1e4-664d8f58655f",
+    "meta": "917af384-6fc5-4525-b1e4-664d8f58655f FS"
+  },
+  {
+    "id": "d91560e6-c36f-415c-bec6-f24b860c164d",
+    "name": "Establish Crew Rotation Schedule",
+    "start": "2053-01-22",
+    "end": "2053-03-23",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "5754268f-9631-46f5-9e3b-de5a40b12aba SS"
+  },
+  {
+    "id": "cafd6c12-9fc5-43e4-90a2-65178c3d117f",
+    "name": "Define Crew Selection Criteria",
+    "start": "2053-01-22",
+    "end": "2053-02-03",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "d91560e6-c36f-415c-bec6-f24b860c164d SS"
+  },
+  {
+    "id": "4b888569-d40c-4915-bedc-a87e95c9d3d5",
+    "name": "Develop Rotation Logistics Plan",
+    "start": "2053-02-03",
+    "end": "2053-02-15",
+    "progress": 0,
+    "dependencies": "cafd6c12-9fc5-43e4-90a2-65178c3d117f",
+    "meta": "cafd6c12-9fc5-43e4-90a2-65178c3d117f FS"
+  },
+  {
+    "id": "4c725e99-44b2-44dd-a081-82c4115d835e",
+    "name": "Establish Medical Support Protocols",
+    "start": "2053-02-15",
+    "end": "2053-02-27",
+    "progress": 0,
+    "dependencies": "4b888569-d40c-4915-bedc-a87e95c9d3d5",
+    "meta": "4b888569-d40c-4915-bedc-a87e95c9d3d5 FS"
+  },
+  {
+    "id": "a13f082f-0acd-4db1-b2e4-aafa05576e9d",
+    "name": "Create Psychological Support Program",
+    "start": "2053-02-27",
+    "end": "2053-03-11",
+    "progress": 0,
+    "dependencies": "4c725e99-44b2-44dd-a081-82c4115d835e",
+    "meta": "4c725e99-44b2-44dd-a081-82c4115d835e FS"
+  },
+  {
+    "id": "2225a591-3260-4395-aa8c-d787165941be",
+    "name": "Coordinate International Crew Participation",
+    "start": "2053-03-11",
+    "end": "2053-03-23",
+    "progress": 0,
+    "dependencies": "a13f082f-0acd-4db1-b2e4-aafa05576e9d",
+    "meta": "d91560e6-c36f-415c-bec6-f24b860c164d FF, a13f082f-0acd-4db1-b2e4-aafa05576e9d FS"
+  },
+  {
+    "id": "e2c923fa-9f66-4120-9c46-d50268f32057",
+    "name": "Conduct Scientific Research",
+    "start": "2053-03-23",
+    "end": "2055-03-23",
+    "progress": 0,
+    "dependencies": "d91560e6-c36f-415c-bec6-f24b860c164d",
+    "meta": "d91560e6-c36f-415c-bec6-f24b860c164d FS"
+  },
+  {
+    "id": "4f31986a-9fce-4dda-a767-b4c93c19604f",
+    "name": "Define Research Objectives and Protocols",
+    "start": "2053-03-23",
+    "end": "2053-08-16",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "e2c923fa-9f66-4120-9c46-d50268f32057 SS"
+  },
+  {
+    "id": "49134739-90c6-45f4-9210-b6c011c59a46",
+    "name": "Deploy and Calibrate Scientific Instruments",
+    "start": "2053-08-16",
+    "end": "2054-01-09",
+    "progress": 0,
+    "dependencies": "4f31986a-9fce-4dda-a767-b4c93c19604f",
+    "meta": "4f31986a-9fce-4dda-a767-b4c93c19604f FS"
+  },
+  {
+    "id": "45e9cd7c-d579-46f9-8f67-ea356773c498",
+    "name": "Collect and Analyze Lunar Samples",
+    "start": "2054-01-09",
+    "end": "2054-06-04",
+    "progress": 0,
+    "dependencies": "49134739-90c6-45f4-9210-b6c011c59a46",
+    "meta": "49134739-90c6-45f4-9210-b6c011c59a46 FS"
+  },
+  {
+    "id": "7eb88a0b-c8cb-4ff6-9a9e-06845826ec81",
+    "name": "Conduct Lunar Environment Studies",
+    "start": "2054-06-04",
+    "end": "2054-10-28",
+    "progress": 0,
+    "dependencies": "45e9cd7c-d579-46f9-8f67-ea356773c498",
+    "meta": "45e9cd7c-d579-46f9-8f67-ea356773c498 FS"
+  },
+  {
+    "id": "7e6e0778-e8c6-40c3-9528-4b6020c6227e",
+    "name": "Publish and Disseminate Research Findings",
+    "start": "2054-10-28",
+    "end": "2055-03-23",
+    "progress": 0,
+    "dependencies": "7eb88a0b-c8cb-4ff6-9a9e-06845826ec81",
+    "meta": "e2c923fa-9f66-4120-9c46-d50268f32057 FF, 7eb88a0b-c8cb-4ff6-9a9e-06845826ec81 FS"
+  },
+  {
+    "id": "a08a241a-1858-4004-9459-243ce4087755",
+    "name": "Maintain Lunar Station Infrastructure",
+    "start": "2055-03-23",
+    "end": "2056-09-21",
+    "progress": 0,
+    "dependencies": "e2c923fa-9f66-4120-9c46-d50268f32057",
+    "meta": "e2c923fa-9f66-4120-9c46-d50268f32057 FS"
+  },
+  {
+    "id": "7da18290-1cf7-44c6-97f9-d686ddf14c30",
+    "name": "Inspect Lunar Station Exterior",
+    "start": "2055-03-23",
+    "end": "2055-08-07",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "a08a241a-1858-4004-9459-243ce4087755 SS"
+  },
+  {
+    "id": "506f3808-e523-4d1d-888f-d44925f5ef48",
+    "name": "Maintain Life Support Systems",
+    "start": "2055-08-07",
+    "end": "2055-12-22",
+    "progress": 0,
+    "dependencies": "7da18290-1cf7-44c6-97f9-d686ddf14c30",
+    "meta": "7da18290-1cf7-44c6-97f9-d686ddf14c30 FS"
+  },
+  {
+    "id": "12e5734e-af2a-4aba-97a6-e14fc92f8040",
+    "name": "Repair Internal Station Components",
+    "start": "2055-12-22",
+    "end": "2056-05-07",
+    "progress": 0,
+    "dependencies": "506f3808-e523-4d1d-888f-d44925f5ef48",
+    "meta": "506f3808-e523-4d1d-888f-d44925f5ef48 FS"
+  },
+  {
+    "id": "8d044335-47ad-4506-a5d0-fc6d4e69393e",
+    "name": "Manage Waste and Refuse",
+    "start": "2056-05-07",
+    "end": "2056-09-21",
+    "progress": 0,
+    "dependencies": "12e5734e-af2a-4aba-97a6-e14fc92f8040",
+    "meta": "a08a241a-1858-4004-9459-243ce4087755 FF, 12e5734e-af2a-4aba-97a6-e14fc92f8040 FS"
+  },
+  {
+    "id": "6952d931-3304-46e5-9828-c3df8c54f383",
+    "name": "Manage Lunar Resources",
+    "start": "2056-09-21",
+    "end": "2058-03-23",
+    "progress": 0,
+    "dependencies": "a08a241a-1858-4004-9459-243ce4087755",
+    "meta": "5754268f-9631-46f5-9e3b-de5a40b12aba FF, a08a241a-1858-4004-9459-243ce4087755 FS"
+  },
+  {
+    "id": "ddc29aa0-fde0-4541-aa60-9bf2cb700342",
+    "name": "Survey Lunar Resource Deposits",
+    "start": "2056-09-21",
+    "end": "2057-02-05",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "6952d931-3304-46e5-9828-c3df8c54f383 SS"
+  },
+  {
+    "id": "53fc2e1a-e97a-49d2-91c8-9b54df934153",
+    "name": "Develop Resource Extraction Technologies",
+    "start": "2057-02-05",
+    "end": "2057-06-22",
+    "progress": 0,
+    "dependencies": "ddc29aa0-fde0-4541-aa60-9bf2cb700342",
+    "meta": "ddc29aa0-fde0-4541-aa60-9bf2cb700342 FS"
+  },
+  {
+    "id": "01f51a1f-9095-450c-8fc3-b7170f8233e7",
+    "name": "Establish Resource Processing Facilities",
+    "start": "2057-06-22",
+    "end": "2057-11-06",
+    "progress": 0,
+    "dependencies": "53fc2e1a-e97a-49d2-91c8-9b54df934153",
+    "meta": "53fc2e1a-e97a-49d2-91c8-9b54df934153 FS"
+  },
+  {
+    "id": "9a4ce413-2184-4716-9c0a-2ca813bb57ff",
+    "name": "Implement Environmental Controls",
+    "start": "2057-11-06",
+    "end": "2058-03-23",
+    "progress": 0,
+    "dependencies": "01f51a1f-9095-450c-8fc3-b7170f8233e7",
+    "meta": "6952d931-3304-46e5-9828-c3df8c54f383 FF, 01f51a1f-9095-450c-8fc3-b7170f8233e7 FS"
+  },
+  {
+    "id": "981dd0ad-19c2-4bba-a07a-94015c73ad86",
+    "name": "Risk Management & Mitigation",
+    "start": "2058-03-23",
+    "end": "2058-10-23",
+    "progress": 0,
+    "dependencies": "5754268f-9631-46f5-9e3b-de5a40b12aba",
+    "meta": "4643fb97-63aa-4336-b2cf-dc42d30154e8 FF, 5754268f-9631-46f5-9e3b-de5a40b12aba FS"
+  },
+  {
+    "id": "61eeec5b-5d6d-4bad-a0a4-78636fe5e94d",
+    "name": "Identify and Assess Project Risks",
+    "start": "2058-03-23",
+    "end": "2058-04-24",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "981dd0ad-19c2-4bba-a07a-94015c73ad86 SS"
+  },
+  {
+    "id": "6f356dac-ad40-4fc1-9ea5-0d4da8c5b571",
+    "name": "Establish Risk Identification Framework",
+    "start": "2058-03-23",
+    "end": "2058-03-31",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "61eeec5b-5d6d-4bad-a0a4-78636fe5e94d SS"
+  },
+  {
+    "id": "df77ccfe-36b4-46ff-bbcb-2a9e7fc0ee02",
+    "name": "Conduct Initial Risk Assessment Workshop",
+    "start": "2058-03-31",
+    "end": "2058-04-08",
+    "progress": 0,
+    "dependencies": "6f356dac-ad40-4fc1-9ea5-0d4da8c5b571",
+    "meta": "6f356dac-ad40-4fc1-9ea5-0d4da8c5b571 FS"
+  },
+  {
+    "id": "fdb38e45-427a-459b-9b21-13d33105a992",
+    "name": "Develop Risk Assessment Templates",
+    "start": "2058-04-08",
+    "end": "2058-04-16",
+    "progress": 0,
+    "dependencies": "df77ccfe-36b4-46ff-bbcb-2a9e7fc0ee02",
+    "meta": "df77ccfe-36b4-46ff-bbcb-2a9e7fc0ee02 FS"
+  },
+  {
+    "id": "2064505e-c05c-428f-a600-9934987d0424",
+    "name": "Document Risk Assessment Results",
+    "start": "2058-04-16",
+    "end": "2058-04-24",
+    "progress": 0,
+    "dependencies": "fdb38e45-427a-459b-9b21-13d33105a992",
+    "meta": "61eeec5b-5d6d-4bad-a0a4-78636fe5e94d FF, fdb38e45-427a-459b-9b21-13d33105a992 FS"
+  },
+  {
+    "id": "a9232398-bb6b-4c27-a7d5-151d0bc7dfa5",
+    "name": "Develop Mitigation Strategies",
+    "start": "2058-04-24",
+    "end": "2058-06-23",
+    "progress": 0,
+    "dependencies": "61eeec5b-5d6d-4bad-a0a4-78636fe5e94d",
+    "meta": "61eeec5b-5d6d-4bad-a0a4-78636fe5e94d FS"
+  },
+  {
+    "id": "41810ee0-be06-4e65-a23a-6aa213004c7b",
+    "name": "Prioritize risks for mitigation",
+    "start": "2058-04-24",
+    "end": "2058-05-09",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "a9232398-bb6b-4c27-a7d5-151d0bc7dfa5 SS"
+  },
+  {
+    "id": "c702c0fc-74e0-431c-9690-21cf17fc4e37",
+    "name": "Develop risk response plans",
+    "start": "2058-05-09",
+    "end": "2058-05-24",
+    "progress": 0,
+    "dependencies": "41810ee0-be06-4e65-a23a-6aa213004c7b",
+    "meta": "41810ee0-be06-4e65-a23a-6aa213004c7b FS"
+  },
+  {
+    "id": "8acab255-1d4d-478c-ac86-1cfc858db52c",
+    "name": "Allocate resources for mitigation",
+    "start": "2058-05-24",
+    "end": "2058-06-08",
+    "progress": 0,
+    "dependencies": "c702c0fc-74e0-431c-9690-21cf17fc4e37",
+    "meta": "c702c0fc-74e0-431c-9690-21cf17fc4e37 FS"
+  },
+  {
+    "id": "eab1efb5-8b40-4e5c-b800-8cb37f2371c9",
+    "name": "Document mitigation strategies",
+    "start": "2058-06-08",
+    "end": "2058-06-23",
+    "progress": 0,
+    "dependencies": "8acab255-1d4d-478c-ac86-1cfc858db52c",
+    "meta": "a9232398-bb6b-4c27-a7d5-151d0bc7dfa5 FF, 8acab255-1d4d-478c-ac86-1cfc858db52c FS"
+  },
+  {
+    "id": "48f62f69-d866-4ee7-89ce-b15dd25d9ceb",
+    "name": "Implement Cybersecurity Measures",
+    "start": "2058-06-23",
+    "end": "2058-09-21",
+    "progress": 0,
+    "dependencies": "a9232398-bb6b-4c27-a7d5-151d0bc7dfa5",
+    "meta": "a9232398-bb6b-4c27-a7d5-151d0bc7dfa5 FS"
+  },
+  {
+    "id": "79a9854a-f13a-4ebc-ae67-4dff0151b071",
+    "name": "Establish Security Policies and Procedures",
+    "start": "2058-06-23",
+    "end": "2058-07-11",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "48f62f69-d866-4ee7-89ce-b15dd25d9ceb SS"
+  },
+  {
+    "id": "cfab64e3-f212-4f7d-aa24-1dea06668ca9",
+    "name": "Implement Access Control Measures",
+    "start": "2058-07-11",
+    "end": "2058-07-29",
+    "progress": 0,
+    "dependencies": "79a9854a-f13a-4ebc-ae67-4dff0151b071",
+    "meta": "79a9854a-f13a-4ebc-ae67-4dff0151b071 FS"
+  },
+  {
+    "id": "037188c2-3262-4102-84db-36c8d1891f26",
+    "name": "Deploy Intrusion Detection and Prevention Systems",
+    "start": "2058-07-29",
+    "end": "2058-08-16",
+    "progress": 0,
+    "dependencies": "cfab64e3-f212-4f7d-aa24-1dea06668ca9",
+    "meta": "cfab64e3-f212-4f7d-aa24-1dea06668ca9 FS"
+  },
+  {
+    "id": "d4e21d0e-811b-4201-b47e-5c2422ed3753",
+    "name": "Conduct Regular Security Audits and Testing",
+    "start": "2058-08-16",
+    "end": "2058-09-03",
+    "progress": 0,
+    "dependencies": "037188c2-3262-4102-84db-36c8d1891f26",
+    "meta": "037188c2-3262-4102-84db-36c8d1891f26 FS"
+  },
+  {
+    "id": "a8cbc26f-89cc-4510-810b-4351c99c8d8e",
+    "name": "Implement Data Encryption and Protection",
+    "start": "2058-09-03",
+    "end": "2058-09-21",
+    "progress": 0,
+    "dependencies": "d4e21d0e-811b-4201-b47e-5c2422ed3753",
+    "meta": "48f62f69-d866-4ee7-89ce-b15dd25d9ceb FF, d4e21d0e-811b-4201-b47e-5c2422ed3753 FS"
+  },
+  {
+    "id": "f0784b1e-476d-4509-ad5b-97a1b25fbc2d",
+    "name": "Monitor and Control Risks",
+    "start": "2058-09-21",
+    "end": "2058-10-23",
+    "progress": 0,
+    "dependencies": "48f62f69-d866-4ee7-89ce-b15dd25d9ceb",
+    "meta": "981dd0ad-19c2-4bba-a07a-94015c73ad86 FF, 48f62f69-d866-4ee7-89ce-b15dd25d9ceb FS"
+  },
+  {
+    "id": "398838dc-c3f7-413d-9c88-7e6f73aeb551",
+    "name": "Establish Risk Monitoring System",
+    "start": "2058-09-21",
+    "end": "2058-09-29",
+    "progress": 0,
+    "dependencies": "",
+    "meta": "f0784b1e-476d-4509-ad5b-97a1b25fbc2d SS"
+  },
+  {
+    "id": "b856d221-f422-40d7-842d-ddb0d645d4db",
+    "name": "Conduct Regular Risk Review Meetings",
+    "start": "2058-09-29",
+    "end": "2058-10-07",
+    "progress": 0,
+    "dependencies": "398838dc-c3f7-413d-9c88-7e6f73aeb551",
+    "meta": "398838dc-c3f7-413d-9c88-7e6f73aeb551 FS"
+  },
+  {
+    "id": "329a5b6f-837c-4e61-97bc-90a0e70018b7",
+    "name": "Implement Automated Risk Alerts",
+    "start": "2058-10-07",
+    "end": "2058-10-15",
+    "progress": 0,
+    "dependencies": "b856d221-f422-40d7-842d-ddb0d645d4db",
+    "meta": "b856d221-f422-40d7-842d-ddb0d645d4db FS"
+  },
+  {
+    "id": "6a309ba4-1e8f-4fc2-9f4c-464af39aa004",
+    "name": "Communicate Risk Status to Stakeholders",
+    "start": "2058-10-15",
+    "end": "2058-10-23",
+    "progress": 0,
+    "dependencies": "329a5b6f-837c-4e61-97bc-90a0e70018b7",
+    "meta": "f0784b1e-476d-4509-ad5b-97a1b25fbc2d FF, 329a5b6f-837c-4e61-97bc-90a0e70018b7 FS"
+  }
+];
+
+const gantt = new Gantt('#the-gantt-container', tasks, {
+    view_mode: 'Day',
+    view_mode_select: true,
+    today_button: false,
+    readonly: true,
+    infinite_padding: false,
+    holidays: false,
+    custom_popup_html: task => `
+      <div style="padding:.5em 1em;max-width:18rem">
+        <h4 style="margin:.2em 0">${task.name}</h4>
+        <p style="margin:.2em 0"><strong>Start:</strong> ${task._start.toLocaleDateString()}</p>
+        <p style="margin:.2em 0"><strong>End:</strong>   ${task._end.toLocaleDateString()}</p>
+        ${task.meta ? `<p style="margin:.2em 0"><strong>Deps:</strong> ${task.meta}</p>` : ''}
+      </div>`
+});
+</script>
+</body>
+</html>
