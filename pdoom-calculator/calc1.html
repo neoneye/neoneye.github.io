@@ -92,9 +92,8 @@
 
     .slider-row {
       display: grid;
-      grid-template-columns: minmax(180px, 1fr) minmax(120px, 160px);
-      align-items: center;
-      gap: 0.8rem;
+      grid-template-columns: minmax(180px, 1fr) minmax(60px, 80px);
+      gap: 1.4rem;
       font-size: 0.95rem;
       padding-right: 1rem;
     }
@@ -305,8 +304,8 @@
           <div class="slider-row">
             <label>
               <span class="slider-caption">
-                <span>Lower chance</span>
-                <span>Higher chance</span>
+                <span>Low chance</span>
+                <span>High chance</span>
               </span>
               <input type="range" min="0" max="100" step="0.5" value="${midpoint.toFixed(1)}" data-role="midpoint" data-key="${key}" aria-label="Midpoint for ${label}" />
             </label>
@@ -315,10 +314,10 @@
           <div class="slider-row">
             <label>
               <span class="slider-caption">
-                <span>High confidence</span>
                 <span>Low confidence</span>
+                <span>High confidence</span>
               </span>
-              <input type="range" min="0" max="${SPREAD_MAX.toFixed(1)}" step="0.5" value="${spread.toFixed(1)}" data-role="spread" data-key="${key}" aria-label="Spread for ${label}" />
+              <input type="range" min="0" max="${SPREAD_MAX.toFixed(1)}" step="0.5" value="${(SPREAD_MAX - spread).toFixed(1)}" data-role="spread" data-key="${key}" aria-label="Spread for ${label}" />
             </label>
             <input type="number" min="0" max="${SPREAD_MAX.toFixed(1)}" step="0.1" value="${spread.toFixed(1)}" data-role="spreadInput" data-key="${key}" />
           </div>
@@ -360,7 +359,8 @@
 
       if (spreadRange) {
         spreadRange.max = SPREAD_MAX.toFixed(1);
-        spreadRange.value = clamp(spread, 0, SPREAD_MAX).toFixed(1);
+        const inverted = SPREAD_MAX - clamp(spread, 0, SPREAD_MAX);
+        spreadRange.value = inverted.toFixed(1);
       }
       if (spreadInput) {
         spreadInput.max = SPREAD_MAX.toFixed(1);
@@ -436,7 +436,11 @@
       const role = event.target.dataset.role;
       const key = event.target.dataset.key;
       if (!role || !key) return;
-      updateState(key, role, Number(event.target.value));
+      let value = Number(event.target.value);
+      if (role === 'spread') {
+        value = SPREAD_MAX - value;
+      }
+      updateState(key, role, value);
     }
 
     function handleNumberInput(event) {
