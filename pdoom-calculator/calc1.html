@@ -100,13 +100,6 @@
       letter-spacing: 0.01em;
     }
 
-    .factor-card:hover,
-    .factor-card:focus-within {
-      border-color: rgba(255, 165, 0, 0.7);
-      transform: translateY(-4px);
-      box-shadow: 0 14px 30px rgba(255, 165, 0, 0.15);
-    }
-
     .factor-header {
       display: flex;
       flex-direction: column;
@@ -197,6 +190,10 @@
       font-weight: 700;
     }
 
+    #range {
+      font-size: 1.5rem;
+    }
+
     .uncertainty-note {
       font-size: 0.95rem;
       color: rgba(230, 235, 255, 0.7);
@@ -249,30 +246,29 @@
     <p class="description">
       Calculate your personal P(doom) by breaking it down into key stages. For each factor, set a midpoint based on
       what you believe is most likely. Then, use the spread to express your uncertainty—the 'known unknowns' and
-      potential surprises. This tool will propagate your estimates, showing the resulting probability range and
-      highlighting which assumptions drive the most uncertainty in your final forecast.
+      potential surprises.
     </p>
 
     <section class="metrics">
       <article class="metric-card">
-        <h2>Midpoint estimate</h2>
+        <h2>P(doom)</h2>
         <div class="metric-value" id="midpointEstimate">–</div>
-        <div class="uncertainty-note">Product of per-stage midpoints.</div>
+        <div class="uncertainty-note">Your best guess, ignoring uncertainty.</div>
       </article>
       <article class="metric-card">
         <h2>10th percentile</h2>
         <div class="metric-value" id="p10">–</div>
-        <div class="uncertainty-note">Based on Monte Carlo with uniform priors over each range.</div>
+        <div class="uncertainty-note">An optimistic outcome, given your uncertainty.</div>
       </article>
       <article class="metric-card">
         <h2>90th percentile</h2>
         <div class="metric-value" id="p90">–</div>
-        <div class="uncertainty-note">Re-simulated live as you adjust sliders.</div>
+        <div class="uncertainty-note">A pessimistic outcome, given your uncertainty.</div>
       </article>
       <article class="metric-card">
         <h2>Range</h2>
         <div class="metric-value" id="range">–</div>
-        <div class="uncertainty-note">Lower to upper bound on the overall product.</div>
+        <div class="uncertainty-note">Full range of possible outcomes.</div>
       </article>
     </section>
 
@@ -283,7 +279,7 @@
     </section>
 
     <p class="footer-note">
-      All calculations stay on this page. Percentages are expressed in terms of the underlying 0–1 probabilities.
+      Stephen Hawking cautioned: "The development of full artificial intelligence could spell the end of the human race."
     </p>
   </main>
 
