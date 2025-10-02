@@ -55,10 +55,11 @@
       border-radius: 14px;
       background: rgba(24, 34, 52, 0.82);
       border: 1px solid rgba(90, 120, 200, 0.25);
-      transition: border-color 0.2s ease, transform 0.2s ease;
+      transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
     }
 
-    .factor-card.highlight {
+    .factor-card:hover,
+    .factor-card:focus-within {
       border-color: rgba(255, 165, 0, 0.7);
       transform: translateY(-4px);
       box-shadow: 0 14px 30px rgba(255, 165, 0, 0.15);
@@ -401,20 +402,10 @@
       const driverMessage = document.getElementById('driverMessage');
       const labels = factors.filter(f => (f.upper - f.lower) === widest).map(f => f.label);
 
-      document.querySelectorAll('.factor-card').forEach(card => card.classList.remove('highlight'));
-
       if (widest === 0) {
         driverMessage.textContent = 'All stages have fixed probabilities; no single stage dominates uncertainty.';
         return;
       }
-
-      labels.forEach(label => {
-        const factor = config.find(item => item.label === label);
-        if (factor) {
-          const card = document.getElementById(`card-${factor.key}`);
-          if (card) card.classList.add('highlight');
-        }
-      });
 
       if (labels.length === 1) {
         driverMessage.textContent = `${labels[0]} currently drives the overall uncertainty.`;
