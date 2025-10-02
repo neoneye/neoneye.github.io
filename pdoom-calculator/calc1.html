@@ -39,7 +39,7 @@
 
     p.description {
       margin: 0 auto 2rem;
-      max-width: 52ch;
+      max-width: 70ch;
       text-align: center;
       color: rgba(230, 235, 255, 0.75);
     }
@@ -109,10 +109,10 @@
 
     .factor-header {
       display: flex;
-      justify-content: space-between;
-      align-items: baseline;
+      flex-direction: column;
+      align-items: flex-start;
       margin-bottom: 0.9rem;
-      gap: 1rem;
+      gap: 0.45rem;
     }
 
     .factor-name {
@@ -123,8 +123,7 @@
     .factor-explanation {
       font-size: 0.9rem;
       color: rgba(230, 235, 255, 0.6);
-      max-width: 28ch;
-      text-align: right;
+      line-height: 1.4;
     }
 
     .sliders {
@@ -246,11 +245,12 @@
 </head>
 <body>
   <main>
-    <h1>P(doom) decomposition</h1>
+    <h1>P(doom) Calculator</h1>
     <p class="description">
-      Adjust midpoint and spread for each stage in the threat model. Lower and upper bounds are derived for you, the
-      calculator propagates uncertainty, estimates the 10th/90th percentile for overall doom, and highlights which stage
-      drives the widest uncertainty.
+      Calculate your personal P(doom) by breaking it down into key stages. For each factor, set a midpoint based on
+      what you believe is most likely. Then, use the spread to express your uncertainty—the 'known unknowns' and
+      potential surprises. This tool will propagate your estimates, showing the resulting probability range and
+      highlighting which assumptions drive the most uncertainty in your final forecast.
     </p>
 
     <section class="metrics">
