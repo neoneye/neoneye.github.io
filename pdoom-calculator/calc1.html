@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>P(doom) Calculator</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.5;
+      background: #111;
+      color: #f5f5f5;
+    }
+
+    body {
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+      background: linear-gradient(180deg, #101823, #050608);
+    }
+
+    main {
+      width: min(960px, 100%);
+      background: rgba(12, 16, 24, 0.92);
+      border: 1px solid rgba(90, 120, 200, 0.3);
+      border-radius: 18px;
+      padding: 2.5rem;
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(6px);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: clamp(1.8rem, 2.5vw, 2.4rem);
+      letter-spacing: 0.02em;
+      text-align: center;
+    }
+
+    p.description {
+      margin: 0 auto 2rem;
+      max-width: 52ch;
+      text-align: center;
+      color: rgba(230, 235, 255, 0.75);
+    }
+
+    .factor-list {
+      display: grid;
+      gap: 1.4rem;
+      margin-bottom: 2.2rem;
+    }
+
+    .factor-card {
+      padding: 1.4rem 1.6rem 1.1rem;
+      border-radius: 14px;
+      background: rgba(24, 34, 52, 0.82);
+      border: 1px solid rgba(90, 120, 200, 0.25);
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .factor-card.highlight {
+      border-color: rgba(255, 165, 0, 0.7);
+      transform: translateY(-4px);
+      box-shadow: 0 14px 30px rgba(255, 165, 0, 0.15);
+    }
+
+    .factor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.9rem;
+    }
+
+    .factor-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .range-summary {
+      font-size: 0.95rem;
+      color: rgba(230, 235, 255, 0.7);
+    }
+
+    .sliders {
+      display: grid;
+      gap: 0.6rem;
+    }
+
+    .slider-row {
+      display: grid;
+      grid-template-columns: minmax(140px, 1fr) minmax(120px, 160px) minmax(60px, 90px);
+      align-items: center;
+      gap: 0.8rem;
+      font-size: 0.95rem;
+    }
+
+    .slider-row label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      color: rgba(230, 235, 255, 0.75);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: rgba(110, 177, 255, 0.9);
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 0.45rem 0.6rem;
+      border-radius: 8px;
+      border: 1px solid rgba(90, 120, 200, 0.4);
+      background: rgba(6, 12, 24, 0.6);
+      color: inherit;
+      font-size: 0.95rem;
+    }
+
+    .metrics {
+      display: grid;
+      gap: 1.2rem;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      margin-bottom: 2rem;
+    }
+
+    .metric-card {
+      padding: 1.2rem 1.4rem;
+      border-radius: 12px;
+      background: rgba(24, 34, 52, 0.82);
+      border: 1px solid rgba(90, 120, 200, 0.2);
+    }
+
+    .metric-card h2 {
+      margin: 0 0 0.6rem;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.75);
+    }
+
+    .metric-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+
+    .uncertainty-note {
+      font-size: 0.95rem;
+      color: rgba(230, 235, 255, 0.7);
+      margin-top: 0.2rem;
+    }
+
+    .driver-message {
+      padding: 1rem 1.2rem;
+      border-radius: 12px;
+      background: rgba(32, 24, 6, 0.75);
+      border: 1px solid rgba(255, 165, 0, 0.35);
+      color: rgba(255, 214, 153, 0.9);
+    }
+
+    .footer-note {
+      font-size: 0.85rem;
+      color: rgba(230, 235, 255, 0.5);
+      text-align: center;
+      margin-top: 2rem;
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 1.2rem;
+      }
+
+      main {
+        padding: 1.6rem;
+      }
+
+      .slider-row {
+        grid-template-columns: 1fr;
+      }
+
+      .factor-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.4rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>P(doom) decomposition</h1>
+    <p class="description">
+      Adjust lower and upper bounds for each stage in the threat model. The calculator propagates the
+      uncertainty, estimates the 10th/90th percentile for overall doom, and highlights which stage drives the
+      widest uncertainty.
+    </p>
+
+    <section class="metrics">
+      <article class="metric-card">
+        <h2>Midpoint estimate</h2>
+        <div class="metric-value" id="midpointEstimate">–</div>
+        <div class="uncertainty-note">Product of per-stage midpoints.</div>
+      </article>
+      <article class="metric-card">
+        <h2>10th percentile</h2>
+        <div class="metric-value" id="p10">–</div>
+        <div class="uncertainty-note">Based on Monte Carlo with uniform priors over each range.</div>
+      </article>
+      <article class="metric-card">
+        <h2>90th percentile</h2>
+        <div class="metric-value" id="p90">–</div>
+        <div class="uncertainty-note">Re-simulated live as you adjust sliders.</div>
+      </article>
+      <article class="metric-card">
+        <h2>Range</h2>
+        <div class="metric-value" id="range">–</div>
+        <div class="uncertainty-note">Lower to upper bound on the overall product.</div>
+      </article>
+    </section>
+
+    <section class="factor-list" id="factorList"></section>
+
+    <section class="driver-message" id="driverMessage">
+      Stage with the widest probability range will be highlighted here.
+    </section>
+
+    <p class="footer-note">
+      All calculations stay on this page. Percentages are expressed in terms of the underlying 0–1 probabilities.
+    </p>
+  </main>
+
+  <script>
+    const config = [
+      {
+        key: 'agiSoon',
+        label: 'P(AGI soon)',
+        explanation: 'Chance that transformative AGI arrives in the relevant planning horizon.',
+        defaults: { lower: 0.5, upper: 1.0 }
+      },
+      {
+        key: 'fastTakeoff',
+        label: 'P(fast takeoff | AGI)',
+        explanation: 'Conditional probability that capability growth is very rapid once AGI appears.',
+        defaults: { lower: 0.7, upper: 0.95 }
+      },
+      {
+        key: 'misaligned',
+        label: 'P(misaligned | fast takeoff)',
+        explanation: 'Chance the resulting AGI is misaligned with human values.',
+        defaults: { lower: 0.8, upper: 0.99 }
+      },
+      {
+        key: 'catastrophe',
+        label: 'P(catastrophe | misaligned)',
+        explanation: 'Probability that misalignment leads to an unrecoverable catastrophe.',
+        defaults: { lower: 0.85, upper: 0.995 }
+      }
+    ];
+
+    const SAMPLES = 4000;
+
+    function mulberry32(a) {
+      return function() {
+        let t = a += 0x6D2B79F5;
+        t = Math.imul(t ^ t >>> 15, t | 1);
+        t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+
+    const state = new Map();
+
+    function createFactorCard({ key, label, defaults, explanation }) {
+      const card = document.createElement('article');
+      card.className = 'factor-card';
+      card.id = `card-${key}`;
+
+      card.innerHTML = `
+        <div class="factor-header">
+          <div>
+            <div class="factor-name">${label}</div>
+            <div class="range-summary" id="summary-${key}">–</div>
+          </div>
+          <div class="range-summary">${explanation}</div>
+        </div>
+        <div class="sliders">
+          <div class="slider-row">
+            <label>Lower bound
+              <input type="range" min="0" max="100" step="1" value="${defaults.lower * 100}" data-role="lower" data-key="${key}" aria-label="Lower bound for ${label}" />
+            </label>
+            <input type="number" min="0" max="100" step="0.1" value="${(defaults.lower * 100).toFixed(1)}" data-role="lowerInput" data-key="${key}" />
+            <div class="range-summary" id="impact-${key}">–</div>
+          </div>
+          <div class="slider-row">
+            <label>Upper bound
+              <input type="range" min="0" max="100" step="1" value="${defaults.upper * 100}" data-role="upper" data-key="${key}" aria-label="Upper bound for ${label}" />
+            </label>
+            <input type="number" min="0" max="100" step="0.1" value="${(defaults.upper * 100).toFixed(1)}" data-role="upperInput" data-key="${key}" />
+            <div></div>
+          </div>
+        </div>
+      `;
+
+      return card;
+    }
+
+    function clamp(value, min = 0, max = 100) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function formatPercent(prob) {
+      return `${(prob * 100).toFixed(1)}%`;
+    }
+
+    function updateState(key, role, percentage) {
+      const current = state.get(key) || { lower: 0, upper: 100 };
+      const value = clamp(percentage);
+      if (role === 'lower') {
+        current.lower = Math.min(value, current.upper);
+      } else if (role === 'upper') {
+        current.upper = Math.max(value, current.lower);
+      }
+      state.set(key, current);
+      syncInputs(key);
+      recalc();
+    }
+
+    function syncInputs(key) {
+      const { lower, upper } = state.get(key);
+      const lowerRange = document.querySelector(`input[data-key="${key}"][data-role="lower"]`);
+      const lowerInput = document.querySelector(`input[data-key="${key}"][data-role="lowerInput"]`);
+      const upperRange = document.querySelector(`input[data-key="${key}"][data-role="upper"]`);
+      const upperInput = document.querySelector(`input[data-key="${key}"][data-role="upperInput"]`);
+      for (const el of [lowerRange, lowerInput]) {
+        if (el) el.value = lower.toFixed(el.type === 'number' ? 1 : 0);
+      }
+      for (const el of [upperRange, upperInput]) {
+        if (el) el.value = upper.toFixed(el.type === 'number' ? 1 : 0);
+      }
+    }
+
+    function recalc() {
+      const factors = config.map(({ key, label }) => {
+        const { lower, upper } = state.get(key);
+        return {
+          key,
+          label,
+          lower: lower / 100,
+          upper: upper / 100,
+          midpoint: ((lower + upper) / 2) / 100
+        };
+      });
+
+      const lowerProduct = factors.reduce((acc, f) => acc * f.lower, 1);
+      const upperProduct = factors.reduce((acc, f) => acc * f.upper, 1);
+      const midpointProduct = factors.reduce((acc, f) => acc * f.midpoint, 1);
+
+      document.getElementById('range').textContent = `${formatPercent(lowerProduct)} → ${formatPercent(upperProduct)}`;
+      document.getElementById('midpointEstimate').textContent = formatPercent(midpointProduct);
+
+      updateSummaries(factors);
+      updateUncertaintyDriver(factors);
+
+      const { p10, p90 } = simulateDistribution(factors);
+      document.getElementById('p10').textContent = formatPercent(p10);
+      document.getElementById('p90').textContent = formatPercent(p90);
+    }
+
+    function updateSummaries(factors) {
+      factors.forEach((factor) => {
+        const summary = document.getElementById(`summary-${factor.key}`);
+        if (summary) {
+          summary.textContent = `${formatPercent(factor.lower)} → ${formatPercent(factor.upper)}`;
+        }
+        const impact = document.getElementById(`impact-${factor.key}`);
+        if (impact) {
+          const spread = ((factor.upper - factor.lower) * 100).toFixed(1);
+          impact.textContent = `Spread: ${spread} pts`;
+        }
+      });
+    }
+
+    function updateUncertaintyDriver(factors) {
+      const widest = Math.max(...factors.map(f => f.upper - f.lower));
+      const driverMessage = document.getElementById('driverMessage');
+      const labels = factors.filter(f => (f.upper - f.lower) === widest).map(f => f.label);
+
+      document.querySelectorAll('.factor-card').forEach(card => card.classList.remove('highlight'));
+
+      if (widest === 0) {
+        driverMessage.textContent = 'All stages have fixed probabilities; no single stage dominates uncertainty.';
+        return;
+      }
+
+      labels.forEach(label => {
+        const factor = config.find(item => item.label === label);
+        if (factor) {
+          const card = document.getElementById(`card-${factor.key}`);
+          if (card) card.classList.add('highlight');
+        }
+      });
+
+      if (labels.length === 1) {
+        driverMessage.textContent = `${labels[0]} currently drives the overall uncertainty.`;
+      } else {
+        driverMessage.textContent = `${labels.join(' & ')} jointly drive the overall uncertainty.`;
+      }
+    }
+
+    function simulateDistribution(factors) {
+      const draw = mulberry32(0xC0D3C0DE);
+      const samples = [];
+      for (let i = 0; i < SAMPLES; i += 1) {
+        let value = 1;
+        for (const factor of factors) {
+          const rand = draw();
+          const sample = factor.lower + rand * (factor.upper - factor.lower);
+          value *= sample;
+        }
+        samples.push(value);
+      }
+      samples.sort((a, b) => a - b);
+      const p10Index = Math.floor(0.10 * (samples.length - 1));
+      const p90Index = Math.floor(0.90 * (samples.length - 1));
+      return { p10: samples[p10Index], p90: samples[p90Index] };
+    }
+
+    function handleRangeInput(event) {
+      const role = event.target.dataset.role;
+      const key = event.target.dataset.key;
+      if (!role || !key) return;
+      updateState(key, role, Number(event.target.value));
+    }
+
+    function handleNumberInput(event) {
+      const role = event.target.dataset.role?.replace('Input', '');
+      const key = event.target.dataset.key;
+      if (!role || !key) return;
+      updateState(key, role, Number(event.target.value));
+    }
+
+    function init() {
+      const list = document.getElementById('factorList');
+      config.forEach((factor) => {
+        const card = createFactorCard(factor);
+        list.appendChild(card);
+        state.set(factor.key, {
+          lower: factor.defaults.lower * 100,
+          upper: factor.defaults.upper * 100
+        });
+      });
+
+      document.addEventListener('input', (event) => {
+        if (event.target.matches('input[type="range"]')) {
+          handleRangeInput(event);
+        }
+        if (event.target.matches('input[type="number"]')) {
+          handleNumberInput(event);
+        }
+      });
+
+      config.forEach(({ key }) => syncInputs(key));
+      recalc();
+    }
+
+    init();
+  </script>
+</body>
+</html>
