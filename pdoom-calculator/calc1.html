@@ -248,28 +248,22 @@
   <script>
     const config = [
       {
-        key: 'agiSoon',
-        label: 'P(AGI soon)',
-        explanation: 'Chance that transformative AGI arrives in the relevant planning horizon.',
-        defaults: { lower: 0.5, upper: 1.0 }
+        key: 'powerfulAi',
+        label: 'P(powerful AI)',
+        explanation: 'Probability that at least one deployable model or toolchain (model, agents, tools, scaling) reaches strategic capability.',
+        defaults: { lower: 0.4, upper: 0.6 }
       },
       {
-        key: 'fastTakeoff',
-        label: 'P(fast takeoff | AGI)',
-        explanation: 'Conditional probability that capability growth is very rapid once AGI appears.',
-        defaults: { lower: 0.7, upper: 0.95 }
+        key: 'dangerousBehavior',
+        label: 'P(dangerous behavior | powerful AI)',
+        explanation: 'Given such a system exists, what is the chance it is misaligned with human values?',
+        defaults: { lower: 0.4, upper: 0.6 }
       },
       {
-        key: 'misaligned',
-        label: 'P(misaligned | fast takeoff)',
-        explanation: 'Chance the resulting AGI is misaligned with human values.',
-        defaults: { lower: 0.8, upper: 0.99 }
-      },
-      {
-        key: 'catastrophe',
-        label: 'P(catastrophe | misaligned)',
-        explanation: 'Probability that misalignment leads to an unrecoverable catastrophe.',
-        defaults: { lower: 0.85, upper: 0.995 }
+        key: 'globalCatastrophe',
+        label: 'P(global catastrophe | dangerous behavior)',
+        explanation: 'Probability that misalignment leads to an unrecoverable global catastrophe.',
+        defaults: { lower: 0.4, upper: 0.6 }
       }
     ];
 
