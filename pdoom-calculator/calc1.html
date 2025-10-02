@@ -56,6 +56,48 @@
       background: rgba(24, 34, 52, 0.82);
       border: 1px solid rgba(90, 120, 200, 0.25);
       transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    .factor-content {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    .factor-bounds {
+      margin-top: auto;
+      display: flex;
+      justify-content: flex-start;
+      align-items: flex-start;
+      gap: 1.2rem;
+      font-size: 0.85rem;
+      color: rgba(230, 235, 255, 0.65);
+      border-top: 1px solid rgba(90, 120, 200, 0.2);
+      padding-top: 0.8rem;
+    }
+
+    .factor-bound {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .factor-bound-label {
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 0.7rem;
+      opacity: 0.65;
+    }
+
+    .factor-bound-value {
+      font-size: 1rem;
+      font-weight: 600;
+      color: rgba(230, 235, 255, 0.85);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.01em;
     }
 
     .factor-card:hover,
@@ -290,30 +332,42 @@
       card.id = `card-${key}`;
 
       card.innerHTML = `
-        <div class="factor-header">
-          <div class="factor-name">${label}</div>
-          <div class="factor-explanation">${explanation}</div>
-        </div>
-        <div class="sliders">
-          <div class="slider-row">
-            <label>
-              <span class="slider-caption">
-                <span>Low chance</span>
-                <span>High chance</span>
-              </span>
-              <input type="range" min="0" max="100" step="0.5" value="${midpoint.toFixed(1)}" data-role="midpoint" data-key="${key}" aria-label="Midpoint for ${label}" />
-            </label>
-            <input type="number" min="0" max="100" step="0.1" value="${midpoint.toFixed(1)}" data-role="midpointInput" data-key="${key}" />
+        <div class="factor-content">
+          <div class="factor-header">
+            <div class="factor-name">${label}</div>
+            <div class="factor-explanation">${explanation}</div>
           </div>
-          <div class="slider-row">
-            <label>
-              <span class="slider-caption">
-                <span>Low confidence</span>
-                <span>High confidence</span>
-              </span>
-              <input type="range" min="0" max="${SPREAD_MAX.toFixed(1)}" step="0.5" value="${(SPREAD_MAX - spread).toFixed(1)}" data-role="spread" data-key="${key}" aria-label="Spread for ${label}" />
-            </label>
-            <input type="number" min="0" max="${SPREAD_MAX.toFixed(1)}" step="0.1" value="${spread.toFixed(1)}" data-role="spreadInput" data-key="${key}" />
+          <div class="sliders">
+            <div class="slider-row">
+              <label>
+                <span class="slider-caption">
+                  <span>Low chance</span>
+                  <span>High chance</span>
+                </span>
+                <input type="range" min="0" max="100" step="0.5" value="${midpoint.toFixed(1)}" data-role="midpoint" data-key="${key}" aria-label="Midpoint for ${label}" />
+              </label>
+              <input type="number" min="0" max="100" step="0.1" value="${midpoint.toFixed(1)}" data-role="midpointInput" data-key="${key}" />
+            </div>
+            <div class="slider-row">
+              <label>
+                <span class="slider-caption">
+                  <span>Low confidence</span>
+                  <span>High confidence</span>
+                </span>
+                <input type="range" min="0" max="${SPREAD_MAX.toFixed(1)}" step="0.5" value="${(SPREAD_MAX - spread).toFixed(1)}" data-role="spread" data-key="${key}" aria-label="Spread for ${label}" />
+              </label>
+              <input type="number" min="0" max="${SPREAD_MAX.toFixed(1)}" step="0.1" value="${spread.toFixed(1)}" data-role="spreadInput" data-key="${key}" />
+            </div>
+          </div>
+        </div>
+        <div class="factor-bounds">
+          <div class="factor-bound">
+            <span class="factor-bound-label">Lower bound</span>
+            <span class="factor-bound-value" data-role="lowerBound" data-key="${key}">--%</span>
+          </div>
+          <div class="factor-bound">
+            <span class="factor-bound-label">Upper bound</span>
+            <span class="factor-bound-value" data-role="upperBound" data-key="${key}">--%</span>
           </div>
         </div>
       `;
@@ -375,6 +429,13 @@
           midpoint: midpoint / 100,
           spread: spread / 100
         };
+      });
+
+      factors.forEach(({ key, lower, upper }) => {
+        const lowerEl = document.querySelector(`span[data-key="${key}"][data-role="lowerBound"]`);
+        const upperEl = document.querySelector(`span[data-key="${key}"][data-role="upperBound"]`);
+        if (lowerEl) lowerEl.textContent = formatPercent(lower);
+        if (upperEl) upperEl.textContent = formatPercent(upper);
       });
 
       const lowerProduct = factors.reduce((acc, f) => acc * f.lower, 1);
