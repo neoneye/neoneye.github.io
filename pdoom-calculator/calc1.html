@@ -78,9 +78,11 @@
       font-weight: 600;
     }
 
-    .range-summary {
-      font-size: 0.95rem;
-      color: rgba(230, 235, 255, 0.7);
+    .factor-explanation {
+      font-size: 0.9rem;
+      color: rgba(230, 235, 255, 0.6);
+      max-width: 28ch;
+      text-align: right;
     }
 
     .sliders {
@@ -90,7 +92,7 @@
 
     .slider-row {
       display: grid;
-      grid-template-columns: minmax(140px, 1fr) minmax(120px, 160px) minmax(120px, 200px);
+      grid-template-columns: minmax(180px, 1fr) minmax(120px, 160px);
       align-items: center;
       gap: 0.8rem;
       font-size: 0.95rem;
@@ -101,11 +103,6 @@
       flex-direction: column;
       gap: 0.35rem;
       color: rgba(230, 235, 255, 0.75);
-    }
-
-    .slider-title {
-      font-size: 0.95rem;
-      font-weight: 600;
     }
 
     .slider-caption {
@@ -197,6 +194,10 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 0.4rem;
+      }
+
+      .factor-explanation {
+        text-align: left;
       }
     }
   </style>
@@ -296,16 +297,12 @@
 
       card.innerHTML = `
         <div class="factor-header">
-          <div>
-            <div class="factor-name">${label}</div>
-            <div class="range-summary" id="summary-${key}">–</div>
-          </div>
-          <div class="range-summary">${explanation}</div>
+          <div class="factor-name">${label}</div>
+          <div class="factor-explanation">${explanation}</div>
         </div>
         <div class="sliders">
           <div class="slider-row">
             <label>
-              <span class="slider-title">Midpoint</span>
               <span class="slider-caption">
                 <span>Lower chance</span>
                 <span>Higher chance</span>
@@ -313,11 +310,9 @@
               <input type="range" min="0" max="100" step="0.5" value="${midpoint.toFixed(1)}" data-role="midpoint" data-key="${key}" aria-label="Midpoint for ${label}" />
             </label>
             <input type="number" min="0" max="100" step="0.1" value="${midpoint.toFixed(1)}" data-role="midpointInput" data-key="${key}" />
-            <div class="range-summary" id="spread-${key}">–</div>
           </div>
           <div class="slider-row">
             <label>
-              <span class="slider-title">Uncertainty band</span>
               <span class="slider-caption">
                 <span>High confidence</span>
                 <span>Low confidence</span>
@@ -325,7 +320,6 @@
               <input type="range" min="0" max="${SPREAD_MAX.toFixed(1)}" step="0.5" value="${spread.toFixed(1)}" data-role="spread" data-key="${key}" aria-label="Spread for ${label}" />
             </label>
             <input type="number" min="0" max="${SPREAD_MAX.toFixed(1)}" step="0.1" value="${spread.toFixed(1)}" data-role="spreadInput" data-key="${key}" />
-            <div class="range-summary" id="bounds-${key}">–</div>
           </div>
         </div>
       `;
@@ -395,30 +389,11 @@
       document.getElementById('range').textContent = `${formatPercent(lowerProduct)} → ${formatPercent(upperProduct)}`;
       document.getElementById('midpointEstimate').textContent = formatPercent(midpointProduct);
 
-      updateSummaries(factors);
       updateUncertaintyDriver(factors);
 
       const { p10, p90 } = simulateDistribution(factors);
       document.getElementById('p10').textContent = formatPercent(p10);
       document.getElementById('p90').textContent = formatPercent(p90);
-    }
-
-    function updateSummaries(factors) {
-      factors.forEach((factor) => {
-        const summary = document.getElementById(`summary-${factor.key}`);
-        if (summary) {
-          summary.textContent = `${formatPercent(factor.lower)} → ${formatPercent(factor.upper)}`;
-        }
-        const spreadDisplay = document.getElementById(`spread-${factor.key}`);
-        if (spreadDisplay) {
-          const width = (factor.upper - factor.lower) * 100;
-          spreadDisplay.textContent = `Width: ${width.toFixed(1)} pts`;
-        }
-        const boundsDisplay = document.getElementById(`bounds-${factor.key}`);
-        if (boundsDisplay) {
-          boundsDisplay.textContent = `Lower ${formatPercent(factor.lower)} • Upper ${formatPercent(factor.upper)}`;
-        }
-      });
     }
 
     function updateUncertaintyDriver(factors) {
