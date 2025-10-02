@@ -256,7 +256,7 @@
     <h1>P(doom) Calculator</h1>
     <p class="description">
       Calculate your personal P(doom) by breaking it down into key stages. For each factor, set a midpoint based on
-      what you believe is most likely. Then, use the spread to express your uncertainty—the 'known unknowns' and
+      what you believe is most likely. Then, use the uncertainty slider to express your uncertainty—the 'known unknowns' and
       potential surprises.
     </p>
 
@@ -348,8 +348,8 @@
             <div class="slider-row">
               <label>
                 <span class="slider-caption">
-                  <span>Low chance</span>
-                  <span>High chance</span>
+                  <span>Unlikely</span>
+                  <span>Likely</span>
                 </span>
                 <input type="range" min="0" max="100" step="0.5" value="${midpoint.toFixed(1)}" data-role="midpoint" data-key="${key}" aria-label="Midpoint for ${label}" />
               </label>
@@ -358,10 +358,10 @@
             <div class="slider-row">
               <label>
                 <span class="slider-caption">
-                  <span>Low confidence</span>
-                  <span>High confidence</span>
+                  <span>Certain</span>
+                  <span>Uncertain</span>
                 </span>
-                <input type="range" min="0" max="${SPREAD_MAX.toFixed(1)}" step="0.5" value="${(SPREAD_MAX - spread).toFixed(1)}" data-role="spread" data-key="${key}" aria-label="Spread for ${label}" />
+                <input type="range" min="0" max="${SPREAD_MAX.toFixed(1)}" step="0.5" value="${spread.toFixed(1)}" data-role="spread" data-key="${key}" aria-label="Uncertainty for ${label}" />
               </label>
               <input type="number" min="0" max="${SPREAD_MAX.toFixed(1)}" step="0.1" value="${spread.toFixed(1)}" data-role="spreadInput" data-key="${key}" />
             </div>
@@ -414,8 +414,7 @@
 
       if (spreadRange) {
         spreadRange.max = SPREAD_MAX.toFixed(1);
-        const inverted = SPREAD_MAX - clamp(spread, 0, SPREAD_MAX);
-        spreadRange.value = inverted.toFixed(1);
+        spreadRange.value = clamp(spread, 0, SPREAD_MAX).toFixed(1);
       }
       if (spreadInput) {
         spreadInput.max = SPREAD_MAX.toFixed(1);
@@ -499,9 +498,6 @@
       const key = event.target.dataset.key;
       if (!role || !key) return;
       let value = Number(event.target.value);
-      if (role === 'spread') {
-        value = SPREAD_MAX - value;
-      }
       updateState(key, role, value);
     }
 
