@@ -69,6 +69,7 @@
       justify-content: space-between;
       align-items: baseline;
       margin-bottom: 0.9rem;
+      gap: 1rem;
     }
 
     .factor-name {
@@ -83,12 +84,12 @@
 
     .sliders {
       display: grid;
-      gap: 0.6rem;
+      gap: 0.8rem;
     }
 
     .slider-row {
       display: grid;
-      grid-template-columns: minmax(140px, 1fr) minmax(120px, 160px) minmax(60px, 90px);
+      grid-template-columns: minmax(140px, 1fr) minmax(120px, 160px) minmax(120px, 200px);
       align-items: center;
       gap: 0.8rem;
       font-size: 0.95rem;
@@ -189,9 +190,9 @@
   <main>
     <h1>P(doom) decomposition</h1>
     <p class="description">
-      Adjust lower and upper bounds for each stage in the threat model. The calculator propagates the
-      uncertainty, estimates the 10th/90th percentile for overall doom, and highlights which stage drives the
-      widest uncertainty.
+      Adjust midpoint and spread for each stage in the threat model. Lower and upper bounds are derived for you, the
+      calculator propagates uncertainty, estimates the 10th/90th percentile for overall doom, and highlights which stage
+      drives the widest uncertainty.
     </p>
 
     <section class="metrics">
@@ -257,6 +258,7 @@
     ];
 
     const SAMPLES = 4000;
+    const SPREAD_MAX = 100;
 
     function mulberry32(a) {
       return function() {
@@ -270,6 +272,9 @@
     const state = new Map();
 
     function createFactorCard({ key, label, defaults, explanation }) {
+      const midpoint = ((defaults.lower + defaults.upper) / 2) * 100;
+      const spread = ((defaults.upper - defaults.lower) / 2) * 100;
+
       const card = document.createElement('article');
       card.className = 'factor-card';
       card.id = `card-${key}`;
@@ -284,18 +289,18 @@
         </div>
         <div class="sliders">
           <div class="slider-row">
-            <label>Lower bound
-              <input type="range" min="0" max="100" step="1" value="${defaults.lower * 100}" data-role="lower" data-key="${key}" aria-label="Lower bound for ${label}" />
+            <label>Midpoint
+              <input type="range" min="0" max="100" step="0.5" value="${midpoint.toFixed(1)}" data-role="midpoint" data-key="${key}" aria-label="Midpoint for ${label}" />
             </label>
-            <input type="number" min="0" max="100" step="0.1" value="${(defaults.lower * 100).toFixed(1)}" data-role="lowerInput" data-key="${key}" />
-            <div class="range-summary" id="impact-${key}">–</div>
+            <input type="number" min="0" max="100" step="0.1" value="${midpoint.toFixed(1)}" data-role="midpointInput" data-key="${key}" />
+            <div class="range-summary" id="spread-${key}">–</div>
           </div>
           <div class="slider-row">
-            <label>Upper bound
-              <input type="range" min="0" max="100" step="1" value="${defaults.upper * 100}" data-role="upper" data-key="${key}" aria-label="Upper bound for ${label}" />
+            <label>Spread
+              <input type="range" min="0" max="${SPREAD_MAX.toFixed(1)}" step="0.5" value="${spread.toFixed(1)}" data-role="spread" data-key="${key}" aria-label="Spread for ${label}" />
             </label>
-            <input type="number" min="0" max="100" step="0.1" value="${(defaults.upper * 100).toFixed(1)}" data-role="upperInput" data-key="${key}" />
-            <div></div>
+            <input type="number" min="0" max="${SPREAD_MAX.toFixed(1)}" step="0.1" value="${spread.toFixed(1)}" data-role="spreadInput" data-key="${key}" />
+            <div class="range-summary" id="bounds-${key}">–</div>
           </div>
         </div>
       `;
@@ -312,12 +317,11 @@
     }
 
     function updateState(key, role, percentage) {
-      const current = state.get(key) || { lower: 0, upper: 100 };
-      const value = clamp(percentage);
-      if (role === 'lower') {
-        current.lower = Math.min(value, current.upper);
-      } else if (role === 'upper') {
-        current.upper = Math.max(value, current.lower);
+      const current = state.get(key) || { midpoint: 50, spread: 0 };
+      if (role === 'midpoint') {
+        current.midpoint = clamp(percentage);
+      } else if (role === 'spread') {
+        current.spread = clamp(percentage, 0, SPREAD_MAX);
       }
       state.set(key, current);
       syncInputs(key);
@@ -325,28 +329,37 @@
     }
 
     function syncInputs(key) {
-      const { lower, upper } = state.get(key);
-      const lowerRange = document.querySelector(`input[data-key="${key}"][data-role="lower"]`);
-      const lowerInput = document.querySelector(`input[data-key="${key}"][data-role="lowerInput"]`);
-      const upperRange = document.querySelector(`input[data-key="${key}"][data-role="upper"]`);
-      const upperInput = document.querySelector(`input[data-key="${key}"][data-role="upperInput"]`);
-      for (const el of [lowerRange, lowerInput]) {
-        if (el) el.value = lower.toFixed(el.type === 'number' ? 1 : 0);
+      const { midpoint, spread } = state.get(key);
+      const midpointRange = document.querySelector(`input[data-key="${key}"][data-role="midpoint"]`);
+      const midpointInput = document.querySelector(`input[data-key="${key}"][data-role="midpointInput"]`);
+      const spreadRange = document.querySelector(`input[data-key="${key}"][data-role="spread"]`);
+      const spreadInput = document.querySelector(`input[data-key="${key}"][data-role="spreadInput"]`);
+
+      if (midpointRange) midpointRange.value = midpoint.toFixed(1);
+      if (midpointInput) midpointInput.value = midpoint.toFixed(1);
+
+      if (spreadRange) {
+        spreadRange.max = SPREAD_MAX.toFixed(1);
+        spreadRange.value = clamp(spread, 0, SPREAD_MAX).toFixed(1);
       }
-      for (const el of [upperRange, upperInput]) {
-        if (el) el.value = upper.toFixed(el.type === 'number' ? 1 : 0);
+      if (spreadInput) {
+        spreadInput.max = SPREAD_MAX.toFixed(1);
+        spreadInput.value = clamp(spread, 0, SPREAD_MAX).toFixed(1);
       }
     }
 
     function recalc() {
       const factors = config.map(({ key, label }) => {
-        const { lower, upper } = state.get(key);
+        const { midpoint, spread } = state.get(key);
+        const lower = Math.max(0, (midpoint - spread) / 100);
+        const upper = Math.min(1, (midpoint + spread) / 100);
         return {
           key,
           label,
-          lower: lower / 100,
-          upper: upper / 100,
-          midpoint: ((lower + upper) / 2) / 100
+          lower,
+          upper,
+          midpoint: midpoint / 100,
+          spread: spread / 100
         };
       });
 
@@ -371,10 +384,14 @@
         if (summary) {
           summary.textContent = `${formatPercent(factor.lower)} → ${formatPercent(factor.upper)}`;
         }
-        const impact = document.getElementById(`impact-${factor.key}`);
-        if (impact) {
-          const spread = ((factor.upper - factor.lower) * 100).toFixed(1);
-          impact.textContent = `Spread: ${spread} pts`;
+        const spreadDisplay = document.getElementById(`spread-${factor.key}`);
+        if (spreadDisplay) {
+          const width = (factor.upper - factor.lower) * 100;
+          spreadDisplay.textContent = `Width: ${width.toFixed(1)} pts`;
+        }
+        const boundsDisplay = document.getElementById(`bounds-${factor.key}`);
+        if (boundsDisplay) {
+          boundsDisplay.textContent = `Lower ${formatPercent(factor.lower)} • Upper ${formatPercent(factor.upper)}`;
         }
       });
     }
@@ -444,8 +461,8 @@
         const card = createFactorCard(factor);
         list.appendChild(card);
         state.set(factor.key, {
-          lower: factor.defaults.lower * 100,
-          upper: factor.defaults.upper * 100
+          midpoint: ((factor.defaults.lower + factor.defaults.upper) / 2) * 100,
+          spread: ((factor.defaults.upper - factor.defaults.lower) / 2) * 100
         });
       });
 
