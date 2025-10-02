@@ -103,6 +103,20 @@
       color: rgba(230, 235, 255, 0.75);
     }
 
+    .slider-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .slider-caption {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      opacity: 0.8;
+    }
+
     input[type="range"] {
       width: 100%;
       accent-color: rgba(110, 177, 255, 0.9);
@@ -290,14 +304,24 @@
         </div>
         <div class="sliders">
           <div class="slider-row">
-            <label>Midpoint
+            <label>
+              <span class="slider-title">Midpoint</span>
+              <span class="slider-caption">
+                <span>Lower chance</span>
+                <span>Higher chance</span>
+              </span>
               <input type="range" min="0" max="100" step="0.5" value="${midpoint.toFixed(1)}" data-role="midpoint" data-key="${key}" aria-label="Midpoint for ${label}" />
             </label>
             <input type="number" min="0" max="100" step="0.1" value="${midpoint.toFixed(1)}" data-role="midpointInput" data-key="${key}" />
             <div class="range-summary" id="spread-${key}">–</div>
           </div>
           <div class="slider-row">
-            <label>Spread
+            <label>
+              <span class="slider-title">Uncertainty band</span>
+              <span class="slider-caption">
+                <span>High confidence</span>
+                <span>Low confidence</span>
+              </span>
               <input type="range" min="0" max="${SPREAD_MAX.toFixed(1)}" step="0.5" value="${spread.toFixed(1)}" data-role="spread" data-key="${key}" aria-label="Spread for ${label}" />
             </label>
             <input type="number" min="0" max="${SPREAD_MAX.toFixed(1)}" step="0.1" value="${spread.toFixed(1)}" data-role="spreadInput" data-key="${key}" />
