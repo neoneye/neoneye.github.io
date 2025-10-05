@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>P(doom) Stats</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Visualize aggregate P(doom) submissions captured from the calculator." />
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2F6NE7JWTR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+  
+    gtag('config', 'G-2F6NE7JWTR');
+  </script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.5;
+      background: #111;
+      color: #f5f5f5;
+    }
+
+    body {
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+      background: linear-gradient(180deg, #101823, #050608);
+    }
+
+    main {
+      width: min(960px, 100%);
+      background: rgba(12, 16, 24, 0.92);
+      border: 1px solid rgba(90, 120, 200, 0.3);
+      border-radius: 18px;
+      padding: 2.5rem;
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(6px);
+    }
+
+    .page-header {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    .back-link {
+      align-self: flex-start;
+      color: rgba(120, 186, 255, 0.95);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .back-link:hover,
+    .back-link:focus {
+      text-decoration: underline;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 2.5vw, 2.4rem);
+      letter-spacing: 0.02em;
+    }
+
+    p.description {
+      margin: 0 auto;
+      max-width: 60ch;
+      color: rgba(230, 235, 255, 0.75);
+    }
+
+    .status-message {
+      margin: 0 0 1.4rem;
+      min-height: 1.2rem;
+      color: rgba(230, 235, 255, 0.7);
+      font-size: 0.9rem;
+    }
+
+    .status-message.error {
+      color: rgba(255, 152, 116, 0.9);
+    }
+
+    .status-message.success {
+      color: rgba(131, 232, 198, 0.9);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1.1rem;
+      margin-bottom: 2rem;
+    }
+
+    .summary-card {
+      padding: 1rem 1.2rem;
+      border-radius: 12px;
+      background: rgba(24, 34, 52, 0.82);
+      border: 1px solid rgba(90, 120, 200, 0.2);
+    }
+
+    .summary-card h2 {
+      margin: 0 0 0.4rem;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.75);
+    }
+
+    .summary-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chart-card {
+      padding: 1.4rem 1.6rem;
+      border-radius: 14px;
+      background: rgba(24, 34, 52, 0.82);
+      border: 1px solid rgba(90, 120, 200, 0.2);
+      margin-bottom: 2rem;
+    }
+
+    .chart-card h2 {
+      margin: 0 0 1rem;
+      font-size: 1.1rem;
+    }
+
+    .chart-area {
+      position: relative;
+      width: 100%;
+      height: 360px;
+    }
+
+    .chart-area canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(24, 34, 52, 0.82);
+      border: 1px solid rgba(90, 120, 200, 0.2);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .data-table th,
+    .data-table td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    .data-table thead {
+      background: rgba(18, 26, 40, 0.9);
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      color: rgba(230, 235, 255, 0.7);
+    }
+
+    .data-table tbody tr:nth-child(odd) {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .footer-note {
+      margin-top: 2.4rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: rgba(230, 235, 255, 0.5);
+    }
+
+    .footer-note a {
+      color: rgba(120, 186, 255, 0.95);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .footer-note a:hover,
+    .footer-note a:focus {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 1.2rem;
+      }
+
+      main {
+        padding: 1.6rem;
+      }
+
+      .page-header {
+        text-align: left;
+      }
+
+      .chart-area {
+        height: 280px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="back-link" href="index.html">&larr; Back to calculator</a>
+    <header class="page-header">
+      <h1>Community Stats</h1>
+      <p class="description">
+        Live view of contributed P(doom) parameters.
+      </p>
+    </header>
+
+    <p class="status-message" id="statusMessage" aria-live="polite"></p>
+
+    <section class="summary-grid">
+      <article class="summary-card">
+        <h2>Total submissions</h2>
+        <div class="summary-value" id="submissionCount">--</div>
+      </article>
+      <article class="summary-card">
+        <h2>Average P(doom)</h2>
+        <div class="summary-value" id="averageMidpoint">--</div>
+      </article>
+      <article class="summary-card">
+        <h2>Last submission</h2>
+        <div class="summary-value" id="lastUpdated">--</div>
+      </article>
+    </section>
+
+    <section class="chart-card">
+      <h2>P(doom) Histogram</h2>
+      <div class="chart-area">
+        <canvas id="factorChart"></canvas>
+      </div>
+    </section>
+
+    <section>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Stage</th>
+            <th>Avg lower</th>
+            <th>Avg midpoint</th>
+            <th>Avg upper</th>
+          </tr>
+        </thead>
+        <tbody id="factorTableBody"></tbody>
+      </table>
+    </section>
+
+    <p class="footer-note">
+      For more context on P(doom), see the <a href="https://en.wikipedia.org/wiki/P(doom)">Wikipedia article</a> with estimates from various researchers.
+    </p>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    const SUPABASE_URL = window.SUPABASE_URL || 'https://xkypfhwxzvxtgdfpksjm.supabase.co';
+    const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreXBmaHd4enZ4dGdkZnBrc2ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2NTk1MzcsImV4cCI6MjA3NTIzNTUzN30.cG3Jh1A-lNp9UTRvjgn0nFuOhQcv1jSeCDIS2yWeWkQ';
+    const SUBMISSIONS_TABLE = 'submissions';
+    const MAX_ROWS = 500;
+
+    let supabaseClient = null;
+    let factorChartInstance = null;
+
+    const config = [
+      {
+        key: 'powerfulAi',
+        label: 'P(powerful AI)'
+      },
+      {
+        key: 'dangerousBehavior',
+        label: 'P(dangerous behavior | powerful AI)'
+      },
+      {
+        key: 'globalCatastrophe',
+        label: 'P(global catastrophe | dangerous behavior)'
+      }
+    ];
+
+    function setStatus(message, tone = 'info') {
+      const statusEl = document.getElementById('statusMessage');
+      if (!statusEl) return;
+      statusEl.textContent = message;
+      statusEl.classList.remove('error', 'success');
+      if (tone === 'error') {
+        statusEl.classList.add('error');
+      } else if (tone === 'success') {
+        statusEl.classList.add('success');
+      }
+    }
+
+    function formatPercent(prob) {
+      if (typeof prob !== 'number' || !Number.isFinite(prob)) return '--';
+      return (prob * 100).toFixed(1) + '%';
+    }
+
+    function getMidpointValues(rows) {
+      return rows
+        .map((row) => {
+          const midpoint = row?.summary?.midpoint;
+          return typeof midpoint === 'number' ? midpoint : null;
+        })
+        .filter((value) => value !== null);
+    }
+
+    function initSupabase() {
+      const missingUrl = !SUPABASE_URL || SUPABASE_URL.includes('YOUR-PROJECT-ID');
+      const missingKey = !SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes('YOUR-PUBLIC-ANON-KEY');
+      if (missingUrl || missingKey) {
+        setStatus('Supabase is not configured. Update SUPABASE_URL and SUPABASE_ANON_KEY.', 'error');
+        return;
+      }
+      if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+        setStatus('Supabase library failed to load.', 'error');
+        return;
+      }
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+
+    async function fetchSubmissions() {
+      if (!supabaseClient) return [];
+      const { data, error } = await supabaseClient
+        .from(SUBMISSIONS_TABLE)
+        .select('factors, summary, submitted_at')
+        .order('submitted_at', { ascending: true })
+        .limit(MAX_ROWS);
+      if (error) throw error;
+      return Array.isArray(data) ? data : [];
+    }
+
+    function aggregateFactors(rows) {
+      const map = new Map();
+      rows.forEach((row) => {
+        if (!Array.isArray(row.factors)) return;
+        row.factors.forEach((factor) => {
+          if (!factor || typeof factor !== 'object') return;
+          const key = factor.key;
+          if (!key) return;
+          if (!map.has(key)) {
+            map.set(key, {
+              label: factor.label || key,
+              midpointTotal: 0,
+              lowerTotal: 0,
+              upperTotal: 0,
+              spreadTotal: 0,
+              count: 0
+            });
+          }
+          const entry = map.get(key);
+          const midpoint = Number(factor.midpoint);
+          const lower = Number(factor.lower);
+          const upper = Number(factor.upper);
+          const spread = Number(factor.spread);
+          if (Number.isFinite(midpoint)) entry.midpointTotal += midpoint;
+          if (Number.isFinite(lower)) entry.lowerTotal += lower;
+          if (Number.isFinite(upper)) entry.upperTotal += upper;
+          if (Number.isFinite(spread)) entry.spreadTotal += spread;
+          entry.label = factor.label || entry.label;
+          entry.count += 1;
+        });
+      });
+      return map;
+    }
+
+    function buildFactorSeries(factorMap) {
+      const series = [];
+      config.forEach(({ key, label }) => {
+        const entry = factorMap.get(key);
+        if (!entry || entry.count === 0) return;
+        series.push({
+          key,
+          label,
+          count: entry.count,
+          midpoint: entry.midpointTotal / entry.count,
+          lower: entry.lowerTotal / entry.count,
+          upper: entry.upperTotal / entry.count
+        });
+      });
+      return series;
+    }
+
+    function buildMidpointHistogram(values) {
+      const BIN_SIZE = 5;
+      const BIN_COUNT = Math.ceil(100 / BIN_SIZE);
+      const bins = Array.from({ length: BIN_COUNT }, (_, index) => {
+        const start = index * BIN_SIZE;
+        const end = start + BIN_SIZE;
+        return {
+          label: `${start}-${end}%`,
+          count: 0
+        };
+      });
+      values.forEach((value) => {
+        const percent = value * 100;
+        if (!Number.isFinite(percent) || percent < 0) return;
+        const binIndex = Math.min(bins.length - 1, Math.floor(percent / BIN_SIZE));
+        bins[binIndex].count += 1;
+      });
+      return bins;
+    }
+
+    function renderMidpointHistogram(bins) {
+      const canvas = document.getElementById('factorChart');
+      if (!canvas || !window.Chart) return;
+      if (factorChartInstance) {
+        factorChartInstance.destroy();
+      }
+      factorChartInstance = new window.Chart(canvas, {
+        type: 'bar',
+        data: {
+          labels: bins.map((bin) => bin.label),
+          datasets: [
+            {
+              label: 'Submissions',
+              data: bins.map((bin) => bin.count),
+              backgroundColor: 'rgba(120, 186, 255, 0.7)',
+              borderColor: 'rgba(120, 186, 255, 1)',
+              borderWidth: 1.5
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0
+              },
+              title: {
+                display: true,
+                text: 'Submissions'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'P(doom) midpoint (%)'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label(context) {
+                  const count = context.parsed.y;
+                  const noun = count === 1 ? 'submission' : 'submissions';
+                  return `${count} ${noun}`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function populateFactorTable(series) {
+      const tbody = document.getElementById('factorTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      series.forEach((item) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${item.label}</td>
+          <td>${formatPercent(item.lower)}</td>
+          <td>${formatPercent(item.midpoint)}</td>
+          <td>${formatPercent(item.upper)}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function renderSummary(rows, midpointValues) {
+      const total = rows.length;
+      const totalEl = document.getElementById('submissionCount');
+      const averageEl = document.getElementById('averageMidpoint');
+      const lastEl = document.getElementById('lastUpdated');
+      if (totalEl) totalEl.textContent = String(total);
+
+      const average = midpointValues.length
+        ? midpointValues.reduce((sum, value) => sum + value, 0) / midpointValues.length
+        : null;
+      if (averageEl) averageEl.textContent = formatPercent(average);
+
+      const last = rows[rows.length - 1];
+      const timestamp = last && last.submitted_at ? new Date(last.submitted_at) : null;
+      if (lastEl) {
+        lastEl.textContent = timestamp ? timestamp.toLocaleString() : '--';
+      }
+    }
+
+    async function init() {
+      setStatus('Loading data...');
+      initSupabase();
+      if (!supabaseClient) {
+        return;
+      }
+      try {
+        const rows = await fetchSubmissions();
+        if (!rows.length) {
+          renderSummary([], []);
+          setStatus('No submissions yet. Share your first set from the calculator.', 'success');
+          return;
+        }
+        const midpointValues = getMidpointValues(rows);
+        renderSummary(rows, midpointValues);
+        if (midpointValues.length) {
+          const histogram = buildMidpointHistogram(midpointValues);
+          renderMidpointHistogram(histogram);
+        } else if (factorChartInstance) {
+          factorChartInstance.destroy();
+        }
+        const factorMap = aggregateFactors(rows);
+        const series = buildFactorSeries(factorMap);
+        populateFactorTable(series);
+        if (!midpointValues.length) {
+          setStatus('No midpoint data available to chart.', 'error');
+          return;
+        }
+        setStatus('');
+      } catch (error) {
+        console.error('Failed to load stats', error);
+        setStatus('Failed to load stats. Please try again later.', 'error');
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

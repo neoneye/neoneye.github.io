@@ -14,7 +14,7 @@
   
     gtag('config', 'G-2F6NE7JWTR');
   </script>
-    <style>
+  <style>
     :root {
       color-scheme: light dark;
       font-family: "Helvetica Neue", Arial, sans-serif;
@@ -219,6 +219,71 @@
       color: rgba(255, 214, 153, 0.9);
     }
 
+    .submission {
+      margin-top: 2.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      align-items: center;
+      text-align: center;
+    }
+
+    .primary-button {
+      padding: 0.75rem 1.6rem;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, rgba(110, 177, 255, 0.95), rgba(76, 131, 238, 0.95));
+      color: #0b1120;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+      box-shadow: 0 10px 24px rgba(46, 118, 224, 0.25);
+    }
+
+    .primary-button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 30px rgba(46, 118, 224, 0.32);
+    }
+
+    .primary-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+      box-shadow: none;
+    }
+
+    .submission-note {
+      font-size: 0.9rem;
+      color: rgba(230, 235, 255, 0.7);
+      max-width: 46ch;
+      margin: 0;
+    }
+
+    .stats-link {
+      color: rgba(120, 186, 255, 0.95);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .stats-link:focus,
+    .stats-link:hover {
+      text-decoration: underline;
+    }
+
+    .submission-status {
+      min-height: 1.2rem;
+      font-size: 0.9rem;
+      color: rgba(230, 235, 255, 0.7);
+    }
+
+    .submission-status.error {
+      color: rgba(255, 152, 116, 0.9);
+    }
+
+    .submission-status.success {
+      color: rgba(131, 232, 198, 0.9);
+    }
+
     .footer-note {
       font-size: 0.85rem;
       color: rgba(230, 235, 255, 0.5);
@@ -287,12 +352,27 @@
       Stage with the widest probability range will be highlighted here.
     </section>
 
+    <section class="submission">
+      <button class="primary-button" id="submitParametersButton" type="button">Submit your P(doom)</button>
+      <p class="submission-note">
+        Share these parameters to contribute to aggregate stats. <a class="stats-link" href="stats.html">View stats</a>.
+      </p>
+      <p class="submission-status" id="submissionStatus" aria-live="polite"></p>
+    </section>
+
     <p class="footer-note">
       Stephen Hawking cautioned: "The development of full artificial intelligence could spell the end of the human race."
     </p>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    const SUPABASE_URL = window.SUPABASE_URL || 'https://xkypfhwxzvxtgdfpksjm.supabase.co';
+    const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreXBmaHd4enZ4dGdkZnBrc2ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2NTk1MzcsImV4cCI6MjA3NTIzNTUzN30.cG3Jh1A-lNp9UTRvjgn0nFuOhQcv1jSeCDIS2yWeWkQ';
+    const SUBMISSIONS_TABLE = 'submissions';
+    let supabaseClient = null;
+    let latestSnapshot = null;
+
     const config = [
       {
         key: 'powerfulAi',
@@ -327,6 +407,91 @@
     }
 
     const state = new Map();
+
+    function initSupabase() {
+      const missingUrl = !SUPABASE_URL || SUPABASE_URL.includes('YOUR-PROJECT-ID');
+      const missingKey = !SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes('YOUR-PUBLIC-ANON-KEY');
+      if (missingUrl || missingKey) {
+        console.info('Supabase client not initialized: configure SUPABASE_URL and SUPABASE_ANON_KEY.');
+        return;
+      }
+      if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+        console.error('Supabase library is not available.');
+        return;
+      }
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+
+    function setSubmissionStatus(message, tone = 'info') {
+      const statusEl = document.getElementById('submissionStatus');
+      if (!statusEl) return;
+      statusEl.textContent = message;
+      statusEl.classList.remove('error', 'success');
+      if (tone === 'error') {
+        statusEl.classList.add('error');
+      } else if (tone === 'success') {
+        statusEl.classList.add('success');
+      }
+    }
+
+    function buildSubmissionPayload() {
+      if (!latestSnapshot) return null;
+      const { factors, lowerProduct, upperProduct, midpointProduct, p10, p90 } = latestSnapshot;
+      return {
+        submitted_at: new Date().toISOString(),
+        factors: factors.map(({ key, label, lower, upper, midpoint, spread }) => ({
+          key,
+          label,
+          lower,
+          upper,
+          midpoint,
+          spread
+        })),
+        summary: {
+          lower: lowerProduct,
+          upper: upperProduct,
+          midpoint: midpointProduct,
+          p10,
+          p90
+        }
+      };
+    }
+
+    async function submitParameters() {
+      const button = document.getElementById('submitParametersButton');
+      if (!supabaseClient) {
+        initSupabase();
+      }
+      if (!supabaseClient) {
+        setSubmissionStatus('Supabase is not configured. Update SUPABASE_URL and SUPABASE_ANON_KEY.', 'error');
+        return;
+      }
+
+      const payload = buildSubmissionPayload();
+      if (!payload) {
+        setSubmissionStatus('Nothing to submit yet. Adjust the sliders first.', 'error');
+        return;
+      }
+
+      setSubmissionStatus('Submitting...');
+      if (button) button.disabled = true;
+      try {
+        const { error } = await supabaseClient
+          .from(SUBMISSIONS_TABLE)
+          .insert({
+            factors: payload.factors,
+            summary: payload.summary,
+            submitted_at: payload.submitted_at
+          });
+        if (error) throw error;
+        setSubmissionStatus('Submitted! Thanks for contributing.', 'success');
+      } catch (error) {
+        console.error('Supabase submission failed', error);
+        setSubmissionStatus('Submission failed. Please try again later.', 'error');
+      } finally {
+        if (button) button.disabled = false;
+      }
+    }
 
     function createFactorCard({ key, label, defaults, explanation }) {
       const midpoint = ((defaults.lower + defaults.upper) / 2) * 100;
@@ -454,6 +619,15 @@
       const { p10, p90 } = simulateDistribution(factors);
       document.getElementById('p10').textContent = formatPercent(p10);
       document.getElementById('p90').textContent = formatPercent(p90);
+
+      latestSnapshot = {
+        factors,
+        lowerProduct,
+        upperProduct,
+        midpointProduct,
+        p10,
+        p90
+      };
     }
 
     function updateUncertaintyDriver(factors) {
@@ -528,6 +702,13 @@
 
       config.forEach(({ key }) => syncInputs(key));
       recalc();
+
+      initSupabase();
+
+      const submitButton = document.getElementById('submitParametersButton');
+      if (submitButton) {
+        submitButton.addEventListener('click', submitParameters);
+      }
     }
 
     init();
