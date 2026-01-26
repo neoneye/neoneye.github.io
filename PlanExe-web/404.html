@@ -3,11 +3,13 @@
   <head>
     <meta charset="utf-8" />
     <title>Redirecting…</title>
-    <meta http-equiv="refresh" content="0; url=https://planexeorg.github.io/PlanExe-web/" />
+    <meta http-equiv="refresh" content="0; url=https://planexe.org/" />
     <script>
       (function () {
-        var newOrigin = "https://planexeorg.github.io";
-        var newUrl = newOrigin + window.location.pathname + window.location.search + window.location.hash;
+        var path = window.location.pathname || "";
+        var newOrigin = "https://planexe.org";
+        var newPath = path.replace(/^\/PlanExe-web\/?/, "/");
+        var newUrl = newOrigin + newPath + window.location.search + window.location.hash;
         window.location.replace(newUrl);
       })();
     </script>
@@ -15,7 +17,7 @@
   <body>
     <p>
       Redirecting to
-      <a href="https://planexeorg.github.io/PlanExe-web/">planexeorg.github.io</a>
+      <a href="https://planexe.org/">planexe.org</a>
       …
     </p>
   </body>
