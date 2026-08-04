@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simon Strandgaard</title>
+    <meta name="description" content="Simon Strandgaard — developer. Projects on AI planning, agent memory, ARC-AGI puzzles and browser experiments.">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://neoneye.github.io/">
+    <meta property="og:title" content="Simon Strandgaard">
+    <meta property="og:description" content="Developer. Projects on AI planning, agent memory, ARC-AGI puzzles and browser experiments.">
+    <meta property="og:image" content="https://neoneye.github.io/simon-strandgaard.jpg">
+    <meta name="twitter:card" content="summary">
 
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-2F6NE7JWTR"></script>
 <script>
@@ -13,35 +21,224 @@
 
   gtag('config', 'G-2F6NE7JWTR');
 </script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
     <style>
-        .profile-photo {
-            width: 200px;
-            height: 200px;
+        :root {
+            --bg: #f5f6f8;
+            --surface: #ffffff;
+            --text: #14161a;
+            --muted: #5c6470;
+            --border: #e2e5ea;
+            --border-hover: #c3cad6;
+            --tag-bg: #eef0f4;
+            --tag-text: #5c6470;
+            --shadow: 0 1px 2px rgba(16, 20, 28, .05);
+            --shadow-hover: 0 8px 24px rgba(16, 20, 28, .10);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0f1115;
+                --surface: #171a20;
+                --text: #e8eaed;
+                --muted: #99a1ae;
+                --border: #262b34;
+                --border-hover: #3c4552;
+                --tag-bg: #21262f;
+                --tag-text: #99a1ae;
+                --shadow: none;
+                --shadow-hover: 0 8px 24px rgba(0, 0, 0, .4);
+            }
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 4rem 1.25rem 5rem;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 1rem;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .wrap {
+            max-width: 60rem;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .portrait {
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
             object-fit: cover;
+            border: 3px solid var(--surface);
+            box-shadow: var(--shadow-hover);
+        }
+
+        h1 {
+            font-family: "Space Grotesk", Inter, sans-serif;
+            font-weight: 700;
+            font-size: 2.25rem;
+            letter-spacing: -.02em;
+            margin: 1.25rem 0 .25rem;
+        }
+
+        .role {
+            color: var(--muted);
+            margin: 0 0 1.5rem;
+        }
+
+        .contact {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+
+        .contact a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: .9375rem;
+            padding-bottom: 2px;
+            border-bottom: 1px solid transparent;
+            transition: color .15s, border-color .15s;
+        }
+
+        .contact a:hover,
+        .contact a:focus-visible {
+            color: var(--text);
+            border-bottom-color: var(--border-hover);
+        }
+
+        h2 {
+            font-family: "Space Grotesk", Inter, sans-serif;
+            font-weight: 500;
+            font-size: .8125rem;
+            text-transform: uppercase;
+            letter-spacing: .12em;
+            color: var(--muted);
+            margin: 0 0 1.25rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+            gap: 1rem;
+        }
+
+        .card {
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            text-decoration: none;
+            color: inherit;
+            transition: transform .15s, border-color .15s, box-shadow .15s;
+        }
+
+        .card:hover,
+        .card:focus-visible {
+            transform: translateY(-2px);
+            border-color: var(--border-hover);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .card h3 {
+            font-family: "Space Grotesk", Inter, sans-serif;
+            font-weight: 500;
+            font-size: 1.125rem;
+            letter-spacing: -.01em;
+            margin: 0 0 .5rem;
+        }
+
+        .card p {
+            color: var(--muted);
+            font-size: .9375rem;
+            margin: 0 0 1.25rem;
+        }
+
+        .tag {
+            align-self: flex-start;
+            margin-top: auto;
+            padding: .1875rem .5rem;
+            background: var(--tag-bg);
+            color: var(--tag-text);
+            border-radius: 5px;
+            font-size: .75rem;
+            letter-spacing: .02em;
+        }
+
+        @media (max-width: 30rem) {
+            body { padding-top: 2.5rem; }
+            h1 { font-size: 1.875rem; }
+            .contact { gap: 1.125rem; }
         }
     </style>
 </head>
-<body class="bg-light d-flex align-items-center justify-content-center" style="height: 100vh;">
-    <div class="container text-center">
-        <img src="simon-strandgaard.jpg" alt="Simon Strandgaard" class="profile-photo mb-3">
-        <h1>Simon Strandgaard</h1>
-        <h2 class="h4 text-muted mb-3">Developer</h2>
-        <p>
-            <a href="mailto:neoneye@gmail.com" class="btn btn-outline-secondary m-1">Email</a>
-            <a href="https://www.youtube.com/channel/UCeXM0JpLzZhugJegLGvxSbw" class="btn btn-outline-secondary m-1">YouTube</a>
-            <a href="https://www.linkedin.com/in/simonstrandgaard/" class="btn btn-outline-secondary m-1">LinkedIn</a>
-            <a href="https://github.com/neoneye" class="btn btn-outline-secondary m-1">GitHub</a>
-        </p>
-        <div class="mt-5">
-            <h3 class="h5 text-muted mb-3">My Projects</h3>
-            <p>
-                <a href="https://planexe.org/" class="btn btn-outline-secondary m-1" target="_blank">PlanExe</a>
-                <a href="https://neoneye.github.io/arc/" class="btn btn-outline-secondary m-1" target="_blank">ARC Interactive</a>
-                <a href="https://neoneye.github.io/pdoom-calculator/" class="btn btn-outline-secondary m-1" target="_blank">P(doom) Calculator</a>
-            </p>
-        </div>
+<body>
+    <div class="wrap">
+        <header>
+            <img src="simon-strandgaard.jpg" alt="Simon Strandgaard" class="portrait" width="120" height="120">
+            <h1>Simon Strandgaard</h1>
+            <p class="role">Developer</p>
+            <nav class="contact">
+                <a href="mailto:neoneye@gmail.com">Email</a>
+                <a href="https://github.com/neoneye" target="_blank" rel="noopener">GitHub</a>
+                <a href="https://www.youtube.com/channel/UCeXM0JpLzZhugJegLGvxSbw" target="_blank" rel="noopener">YouTube</a>
+                <a href="https://www.linkedin.com/in/simonstrandgaard/" target="_blank" rel="noopener">LinkedIn</a>
+            </nav>
+        </header>
+
+        <main>
+            <h2>Projects</h2>
+            <div class="grid">
+                <a class="card" href="https://planexe.org/" target="_blank" rel="noopener">
+                    <h3>PlanExe</h3>
+                    <p>Turns a one-line idea into a full project plan — budget, risks, timeline, team.</p>
+                    <span class="tag">AI planning</span>
+                </a>
+                <a class="card" href="https://neoneye.github.io/agent-memory-atlas/" target="_blank" rel="noopener">
+                    <h3>Agent Memory Atlas</h3>
+                    <p>A code-grounded field guide to memory systems for AI agents.</p>
+                    <span class="tag">research</span>
+                </a>
+                <a class="card" href="https://github.com/neoneye/RainBox" target="_blank" rel="noopener">
+                    <h3>RainBox</h3>
+                    <p>A personal assistant that runs entirely on local models.</p>
+                    <span class="tag">local AI</span>
+                </a>
+                <a class="card" href="https://neoneye.github.io/vibe-coding-lab/" target="_blank" rel="noopener">
+                    <h3>Vibe Coding Lab</h3>
+                    <p>Browser experiments — ray marching, voxel caves, slime mold, 2-player cylinder Tetris.</p>
+                    <span class="tag">experiments</span>
+                </a>
+                <a class="card" href="https://neoneye.github.io/arc/" target="_blank" rel="noopener">
+                    <h3>ARC Interactive</h3>
+                    <p>Solve ARC-AGI puzzles in the browser, on desktop or phone.</p>
+                    <span class="tag">puzzles</span>
+                </a>
+                <a class="card" href="https://neoneye.github.io/pdoom-calculator/" target="_blank" rel="noopener">
+                    <h3>P(doom) Calculator</h3>
+                    <p>Answer a few questions, get your own estimate of AI existential risk.</p>
+                    <span class="tag">AI safety</span>
+                </a>
+            </div>
+        </main>
     </div>
 </body>
 </html>
