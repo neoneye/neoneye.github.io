@@ -58,14 +58,31 @@
 
         * { box-sizing: border-box; }
 
-        body {
-            margin: 0;
-            padding: 4rem 1.25rem 4rem;
+        /* The static grid is the no-WebGL fallback; the shader replaces it. */
+        html {
             background-color: var(--bg);
             background-image:
                 linear-gradient(var(--grid-line) 1px, transparent 1px),
                 linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
             background-size: 52px 52px;
+        }
+
+        html.shader-bg { background-image: none; }
+
+        #bg {
+            position: fixed;
+            inset: 0;
+            display: block;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 4rem 1.25rem 4rem;
+            background: transparent;
             color: var(--text);
             font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             line-height: 1.6;
@@ -299,6 +316,8 @@
     </style>
 </head>
 <body>
+    <canvas id="bg" aria-hidden="true"></canvas>
+
     <div class="wrap">
         <header>
             <span class="portrait-frame chamfer">
@@ -420,5 +439,217 @@
 
         <footer>Simon Strandgaard // neoneye</footer>
     </div>
+
+<script>
+/*
+ * Spacetime-curvature background.
+ *
+ * The cursor is a mass that bends the grid. Unlike real spacetime, the
+ * curvature has memory: the last 5 seconds of cursor path stay bent and
+ * fade out, so you can see where you have been.
+ *
+ * The trail is a polyline of timestamped samples. Each fragment sums the
+ * pull of every segment, weighted by that segment's remaining life, and
+ * the grid is drawn from the displaced coordinate.
+ */
+(function () {
+    var LIFE = 5000;   // ms a sample stays in the trail
+    var MAX = 32;      // max samples (shader array size)
+    var SAMPLE = 150;  // ms between samples: MAX * SAMPLE covers LIFE
+
+    var cvs = document.getElementById('bg');
+    if (!cvs) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    var gl = cvs.getContext('webgl2', {
+        alpha: true, antialias: false, premultipliedAlpha: true, depth: false
+    });
+    if (!gl) return;  // fall back to the static CSS grid
+
+    var VS = '#version 300 es\n' +
+        'void main() {\n' +
+        '  vec2 v[3] = vec2[3](vec2(-1.0, -1.0), vec2(3.0, -1.0), vec2(-1.0, 3.0));\n' +
+        '  gl_Position = vec4(v[gl_VertexID], 0.0, 1.0);\n' +
+        '}';
+
+    var FS = '#version 300 es\n' +
+        'precision highp float;\n' +
+        'uniform float uGrid;\n' +
+        'uniform float uStrength;\n' +
+        'uniform float uRadius;\n' +
+        'uniform int   uCount;\n' +
+        'uniform vec2  uPts[' + MAX + '];\n' +
+        'uniform float uWts[' + MAX + '];\n' +
+        'uniform vec3  uBase;\n' +
+        'uniform vec3  uAccent;\n' +
+        'uniform float uBaseA;\n' +
+        'uniform float uHeatA;\n' +
+        'out vec4 fragColor;\n' +
+        'void main() {\n' +
+        '  vec2 p = gl_FragCoord.xy;\n' +
+        '  vec2 disp = vec2(0.0);\n' +
+        '  float heat = 0.0;\n' +
+        '  float r2 = uRadius * uRadius;\n' +
+        // Sum the pull of each trail segment.
+        '  for (int i = 0; i + 1 < uCount; i++) {\n' +
+        '    vec2 a = uPts[i];\n' +
+        '    vec2 b = uPts[i + 1];\n' +
+        '    vec2 ba = b - a;\n' +
+        '    float dd = dot(ba, ba);\n' +
+        '    float t = dd > 0.0001 ? clamp(dot(p - a, ba) / dd, 0.0, 1.0) : 0.0;\n' +
+        '    vec2 dir = p - (a + ba * t);\n' +
+        '    float dist2 = dot(dir, dir);\n' +
+        '    float f = mix(uWts[i], uWts[i + 1], t) / (1.0 + dist2 / r2);\n' +
+        '    disp -= dir * (uStrength * f / sqrt(max(dist2, 1e-6)));\n' +
+        '    heat += f;\n' +
+        '  }\n' +
+        '  heat = clamp(heat, 0.0, 1.0);\n' +
+        // Draw the grid from the displaced coordinate. fwidth() keeps the
+        // lines antialiased even where the curvature compresses them.
+        '  vec2 q = (p + disp) / uGrid;\n' +
+        '  vec2 d = abs(fract(q - 0.5) - 0.5) / max(fwidth(q) * 1.4, vec2(1e-5));\n' +
+        '  float line = 1.0 - min(min(d.x, d.y), 1.0);\n' +
+        '  vec3 col = mix(uBase, uAccent, smoothstep(0.0, 0.55, heat));\n' +
+        '  float a = line * (uBaseA + uHeatA * heat);\n' +
+        '  fragColor = vec4(col * a, a);\n' +
+        '}';
+
+    function compile(type, src) {
+        var s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+            console.warn('bg shader:', gl.getShaderInfoLog(s));
+            return null;
+        }
+        return s;
+    }
+
+    var vs = compile(gl.VERTEX_SHADER, VS);
+    var fs = compile(gl.FRAGMENT_SHADER, FS);
+    if (!vs || !fs) return;
+
+    var prog = gl.createProgram();
+    gl.attachShader(prog, vs);
+    gl.attachShader(prog, fs);
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+        console.warn('bg link:', gl.getProgramInfoLog(prog));
+        return;
+    }
+    gl.useProgram(prog);
+
+    var U = {};
+    ['uGrid', 'uStrength', 'uRadius', 'uCount', 'uPts', 'uWts',
+     'uBase', 'uAccent', 'uBaseA', 'uHeatA'].forEach(function (n) {
+        U[n] = gl.getUniformLocation(prog, n);
+    });
+
+    // The shader emits premultiplied color, so the alpha channel must use its
+    // own factors. A plain blendFunc(SRC_ALPHA, ...) would square the alpha
+    // against a transparent clear and the grid would composite to nothing.
+    gl.enable(gl.BLEND);
+    gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.clearColor(0, 0, 0, 0);
+
+    var light = window.matchMedia('(prefers-color-scheme: light)');
+    function theme() {
+        // baseA keeps the resting grid near the 2% of the CSS grid it replaces;
+        // heatA is what the wake adds on top.
+        return light.matches
+            ? { base: [0.09, 0.10, 0.12], accent: [0.59, 0.38, 0.06], baseA: 0.05, heatA: 0.45 }
+            : { base: [0.62, 0.65, 0.70], accent: [0.91, 0.64, 0.24], baseA: 0.05, heatA: 0.55 };
+    }
+
+    var scale = 1;
+    function resize() {
+        scale = Math.min(window.devicePixelRatio || 1, 2) * 0.75;
+        var w = Math.max(1, Math.round(window.innerWidth * scale));
+        var h = Math.max(1, Math.round(window.innerHeight * scale));
+        if (cvs.width !== w || cvs.height !== h) {
+            cvs.width = w;
+            cvs.height = h;
+            gl.viewport(0, 0, w, h);
+        }
+    }
+
+    var pts = [];        // {x, y, t} in CSS px, y measured from the top
+    var cursor = null;   // live pointer position, or null once it leaves
+    var running = false;
+
+    var ptsBuf = new Float32Array(MAX * 2);
+    var wtsBuf = new Float32Array(MAX);
+
+    function frame() {
+        var now = performance.now();
+        resize();
+
+        // Drop expired samples.
+        while (pts.length && now - pts[0].t > LIFE) pts.shift();
+
+        // Build the polyline: history, then the live cursor at full weight.
+        var list = pts.slice();
+        if (cursor) list.push({ x: cursor.x, y: cursor.y, t: now });
+        if (list.length > MAX) list = list.slice(list.length - MAX);
+        if (list.length === 1) list.push(list[0]);  // a lone sample is a point well
+
+        var n = Math.min(list.length, MAX);
+        for (var i = 0; i < n; i++) {
+            ptsBuf[i * 2] = list[i].x * scale;
+            // gl_FragCoord has y up from the bottom; pointer events have y down.
+            ptsBuf[i * 2 + 1] = (window.innerHeight - list[i].y) * scale;
+            var k = Math.max(0, Math.min(1, 1 - (now - list[i].t) / LIFE));
+            wtsBuf[i] = k * k * (3 - 2 * k);  // ease the fade out
+        }
+
+        var c = theme();
+        gl.uniform1f(U.uGrid, 52 * scale);
+        gl.uniform1f(U.uStrength, 30 * scale);
+        gl.uniform1f(U.uRadius, 150 * scale);
+        gl.uniform1i(U.uCount, n);
+        gl.uniform2fv(U.uPts, ptsBuf);
+        gl.uniform1fv(U.uWts, wtsBuf);
+        gl.uniform3fv(U.uBase, c.base);
+        gl.uniform3fv(U.uAccent, c.accent);
+        gl.uniform1f(U.uBaseA, c.baseA);
+        gl.uniform1f(U.uHeatA, c.heatA);
+
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+        // Hand over from the CSS grid only once something is actually on the
+        // canvas, so a tab that loads hidden (no rAF) still shows a grid.
+        document.documentElement.classList.add('shader-bg');
+
+        // Idle once the trail is empty: the flat grid just drawn stays put.
+        if (!pts.length && !cursor) { running = false; return; }
+        requestAnimationFrame(frame);
+    }
+
+    function kick() {
+        if (!running) { running = true; requestAnimationFrame(frame); }
+    }
+
+    window.addEventListener('pointermove', function (e) {
+        cursor = { x: e.clientX, y: e.clientY };
+        var last = pts[pts.length - 1];
+        if (!last || performance.now() - last.t > SAMPLE) {
+            pts.push({ x: e.clientX, y: e.clientY, t: performance.now() });
+            if (pts.length > MAX) pts.shift();
+        }
+        kick();
+    }, { passive: true });
+
+    // Leaving the window drops the mass but keeps the wake decaying.
+    window.addEventListener('pointerout', function (e) {
+        if (!e.relatedTarget) cursor = null;
+    }, { passive: true });
+
+    window.addEventListener('resize', kick, { passive: true });
+    if (light.addEventListener) light.addEventListener('change', kick);
+
+    kick();
+})();
+</script>
 </body>
 </html>
